@@ -111,7 +111,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
   return (
     <div className="min-h-screen">
       <DeskChrome board={board} />
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[12.5rem_minmax(0,1fr)_19.5rem]">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[11.5rem_minmax(0,1fr)_minmax(18rem,20.5rem)]">
         <TickerRail active={active} onSelect={selectTicker} />
         <main className={cn("min-w-0", pending && "opacity-60 transition-opacity")}>
           <QuoteHero board={board} />
@@ -271,39 +271,38 @@ function QuoteHero({ board }: { board: BoardPayload }) {
 function MarkTable({ board }: { board: BoardPayload }) {
   const sessionClosed = !board.session.cashOpen;
   return (
-    <Card className="mt-6 overflow-hidden py-0">
-      <Table>
+    <Card className="mt-6 py-0">
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="text-[10px] uppercase tracking-widest">Venue</TableHead>
-            <TableHead className="text-right text-[10px] uppercase tracking-widest">Print</TableHead>
-            <TableHead className="text-right text-[10px] uppercase tracking-widest">Vs cash</TableHead>
-            <TableHead className="text-right text-[10px] uppercase tracking-widest">Source</TableHead>
+            <TableHead className="w-[28%] whitespace-normal text-[10px] uppercase tracking-widest">Venue</TableHead>
+            <TableHead className="w-[22%] text-right text-[10px] uppercase tracking-widest">Print</TableHead>
+            <TableHead className="w-[28%] text-right text-[10px] uppercase tracking-widest">Vs cash</TableHead>
+            <TableHead className="w-[22%] text-right text-[10px] uppercase tracking-widest">Source</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {BoardView.columns(board).map((column) => {
             const empty = column.mark.priceUsd === null;
             const lastPrint = BoardView.lastCashPrint(column.mark, sessionClosed);
+            const note = BoardView.rowNote(column.mark);
             return (
               <TableRow key={column.mark.kind} className={column.reference ? "bg-muted/40" : undefined}>
-                <TableCell>
+                <TableCell className="align-top whitespace-normal">
                   <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-session">{column.mark.label}</p>
                   <p className="text-xs text-muted-foreground">{column.mark.issuer}</p>
-                  {column.mark.note ? (
-                    <p className="mt-1 max-w-xs text-[11px] leading-snug text-muted-foreground">{column.mark.note}</p>
-                  ) : null}
+                  {note ? <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{note}</p> : null}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="align-top text-right">
                   <p className="price-xl font-mono text-xl">{Format.compactUsd(column.mark.priceUsd)}</p>
                   <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
-                    {empty ? "No print" : BoardView.printAge(column.mark)}
+                    {BoardView.printMeta(column.mark)}
                   </p>
                 </TableCell>
-                <TableCell className={cn("text-right font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
-                  {BoardView.pegCopy(column.peg)}
+                <TableCell className={cn("align-top whitespace-normal text-right font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
+                  {BoardView.pegCopy(column.peg, true)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="align-top whitespace-normal text-right">
                   {lastPrint ? (
                     <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
                   ) : (

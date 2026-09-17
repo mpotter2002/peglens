@@ -14,7 +14,7 @@ export function BoardSkeleton() {
           <Skeleton className="h-9 w-64" />
         </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[12.5rem_minmax(0,1fr)_19.5rem]">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[11.5rem_minmax(0,1fr)_minmax(18rem,20.5rem)]">
         <Skeleton className="h-80" />
         <div className="space-y-5">
           <Skeleton className="h-24 w-72" />

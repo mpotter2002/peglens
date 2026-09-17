@@ -18,11 +18,24 @@ describe("BoardView", () => {
 
   it("does not invent peg copy", () => {
     expect(BoardView.pegCopy(null)).toMatch(/Reference mark/);
+    expect(BoardView.pegCopy(null, true)).toBe("Reference");
     expect(BoardView.pegCopy(peg({ sign: "unavailable", bps: null, dollars: null }))).toBe("No peg yet");
     expect(BoardView.pegCopy(peg({ sign: "flat", bps: 1.2, dollars: 0.04 }))).toMatch(/In line/);
     expect(BoardView.pegCopy(peg({ sign: "premium", bps: 32, dollars: 1.08 }))).toMatch(/vs cash/);
     expect(BoardView.pegTone(peg({ sign: "discount", bps: -12, dollars: -0.4 }))).toBe("discount");
     expect(BoardView.pegTone(null)).toBe("muted");
+  });
+
+  it("keeps table rows quiet: no repeated Terminal boilerplate, no invented meta", () => {
+    const snapshot = mark({
+      kind: "equity",
+      note: "Pyth Terminal public snapshot. Set PYTH_API_KEY for signed Hermes ticks.",
+    });
+    const missing = mark({ kind: "xstock", priceUsd: null, note: "Pyth does not list this feed." });
+    expect(BoardView.rowNote(snapshot)).toBeNull();
+    expect(BoardView.rowNote(missing)).toBe("Pyth does not list this feed.");
+    expect(BoardView.printMeta(snapshot)).toBe("snapshot");
+    expect(BoardView.printMeta(missing)).toBe("No print");
   });
 
   it("uses the same empty-state copy as the desk", () => {

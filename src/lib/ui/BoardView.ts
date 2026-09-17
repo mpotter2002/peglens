@@ -61,9 +61,32 @@ export class BoardView {
     return `Broker / cash · ${age}`;
   }
 
-  static pegCopy(peg: PegVsEquity | null): string {
+  static printMeta(mark: BoardMark): string {
+    if (mark.priceUsd === null) {
+      return "No print";
+    }
+    if (mark.publishTime) {
+      return Format.relative(mark.publishTime);
+    }
+    if (mark.source === "pyth-terminal") {
+      return "snapshot";
+    }
+    return mark.source;
+  }
+
+  static rowNote(mark: BoardMark): string | null {
+    if (!mark.note) {
+      return null;
+    }
+    if (/Pyth Terminal public snapshot/i.test(mark.note)) {
+      return null;
+    }
+    return mark.note;
+  }
+
+  static pegCopy(peg: PegVsEquity | null, compact = false): string {
     if (!peg) {
-      return "Reference mark for every wrapper on this board.";
+      return compact ? "Reference" : "Reference mark for every wrapper on this board.";
     }
     if (peg.sign === "unavailable") {
       return "No peg yet";
