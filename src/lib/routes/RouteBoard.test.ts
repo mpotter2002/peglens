@@ -53,7 +53,7 @@ describe("RouteBoard", () => {
     expect(card.cheapest?.venue).toBe("jupiter");
     expect(card.featured?.url).toBe("https://jup.ag/tsla");
     expect(card.raydiumIsCheapest).toBe(false);
-    expect(card.honesty).toMatch(/Jupiter is cheaper/i);
+    expect(card.honesty).toMatch(/Jupiter is cheaper than Raydium/i);
   });
 
   it("does not call a lone Raydium quote the cheapest venue", () => {
@@ -101,6 +101,7 @@ describe("RouteBoard", () => {
     });
     expect(card.featured?.venue).toBe("jupiter");
     expect(card.honesty).toMatch(/Raydium has no pool/i);
+    expect(card.honesty).toMatch(/not a cheapest claim/i);
   });
 
   it("does not invent a route when nothing quotes", () => {

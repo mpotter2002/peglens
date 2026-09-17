@@ -411,6 +411,7 @@ function pegClass(tone: PegTone): string {
 function RouteTicket({ board }: { board: BoardPayload }) {
   const featured = board.cheapestHonest;
   const cta = BoardView.ctaLabel(board);
+  const alternatives = BoardView.alternativeQuotes(board);
   return (
     <Card className="h-fit min-w-0 overflow-hidden lg:sticky lg:top-24">
       <CardHeader>
@@ -438,6 +439,19 @@ function RouteTicket({ board }: { board: BoardPayload }) {
               <ArrowUpRight className="size-4 shrink-0" />
             </a>
           </Button>
+        ) : null}
+        {alternatives.length > 0 ? (
+          <div className="space-y-1.5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Other buy sources</p>
+            {alternatives.map((quote) => (
+              <Button key={quote.venue} asChild variant="outline" size="sm" className="h-auto w-full min-w-0 justify-between whitespace-normal py-2">
+                <a href={quote.url ?? undefined} target="_blank" rel="noreferrer">
+                  <span>Open {BoardView.venueLabel(quote.venue)}</span>
+                  <span className="font-mono">{Format.usd(quote.effectiveUsdPerShare, 2)}</span>
+                </a>
+              </Button>
+            ))}
+          </div>
         ) : null}
         <div className="space-y-3">
           {BoardView.routeCards(board).map((card) => (
@@ -474,14 +488,26 @@ function RouteQuotes({ card }: { card: WrapperRouteCard }) {
         <p className="mt-2 text-xs text-muted-foreground">{BoardView.emptyQuotes()}</p>
       ) : (
         <ul className="mt-2 space-y-1.5">
-          {card.quotes.map((quote) => (
-            <li key={quote.venue} className="flex items-start justify-between gap-3 font-mono text-[11px]">
-              <span className="uppercase tracking-widest text-muted-foreground">{BoardView.venueLabel(quote.venue)}</span>
-              <span className={cn("max-w-[70%] text-right break-words", quote.available ? "text-foreground" : "text-premium")}>
-                {BoardView.quoteLine(quote)}
-              </span>
-            </li>
-          ))}
+          {BoardView.sortedQuotes(card).map((quote) => {
+            const winning = BoardView.marksCheapest(card, quote);
+            return (
+              <li
+                key={quote.venue}
+                className={cn(
+                  "flex items-start justify-between gap-3 rounded-md px-1.5 py-1 font-mono text-[11px]",
+                  winning && "bg-session/10",
+                )}
+              >
+                <span className="flex min-w-0 items-baseline gap-1.5 uppercase tracking-widest text-muted-foreground">
+                  <span>{BoardView.venueLabel(quote.venue)}</span>
+                  {winning ? <span className="normal-case tracking-normal text-session">Cheapest</span> : null}
+                </span>
+                <span className={cn("max-w-[70%] text-right break-words", quote.available ? "text-foreground" : "text-premium")}>
+                  {BoardView.quoteLine(quote)}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

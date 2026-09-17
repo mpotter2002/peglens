@@ -27,7 +27,7 @@ export class DemoScript {
       {
         n: "04",
         title: "Cheapest honest route",
-        lookFor: "CTA follows the cheapest quoted venue. AAPLon says so if Raydium has no pool.",
+        lookFor: "Cheapest venue is the primary CTA. Raydium, Jupiter, and Meteora are listed. AAPLon says so if Raydium has no pool.",
       },
       {
         n: "05",

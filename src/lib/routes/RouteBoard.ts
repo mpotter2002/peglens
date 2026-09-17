@@ -1,6 +1,19 @@
-import type { SwapQuote, WrapperKind, WrapperRouteCard } from "@/lib/types";
+import type { RouteVenue, SwapQuote, WrapperKind, WrapperRouteCard } from "@/lib/types";
 
 export class RouteBoard {
+  static venueTitle(venue: RouteVenue): string {
+    if (venue === "raydium") {
+      return "Raydium";
+    }
+    if (venue === "jupiter") {
+      return "Jupiter";
+    }
+    if (venue === "meteora") {
+      return "Meteora";
+    }
+    return "dFlow";
+  }
+
   static card(params: {
     kind: WrapperKind;
     label: string;
@@ -46,29 +59,29 @@ export class RouteBoard {
     if (!params.mint) {
       return "No Solana mint resolved — no swap route to quote.";
     }
+    const live = params.quotes.filter((quote) => quote.available && quote.effectiveUsdPerShare);
     const raydiumMiss = params.quotes.find((quote) => quote.venue === "raydium" && !quote.available);
-    const jupiter = params.quotes.find((quote) => quote.venue === "jupiter" && quote.available) ?? null;
-    if (!params.featured) {
-      return raydiumMiss?.reason || "No executable route from Raydium or Jupiter for this size.";
+    const jupiter = live.find((quote) => quote.venue === "jupiter") ?? null;
+    if (!params.cheapest) {
+      return raydiumMiss?.reason || "No executable route from Raydium, Jupiter, or Meteora for this size.";
     }
-    if (params.raydium && params.cheapest && params.cheapest.venue === "raydium") {
-      if (!jupiter) {
-        return "Raydium quoted this size. PegLens did not get a second venue to compare — not a cheapest claim.";
-      }
-      if (this.jupiterIsRaydium(jupiter)) {
+    const winnerName = this.venueTitle(params.cheapest.venue);
+    if (live.length === 1) {
+      const miss = raydiumMiss ? " Raydium has no pool." : "";
+      return `${winnerName} quoted this size.${miss} PegLens did not get a second venue to compare — not a cheapest claim.`;
+    }
+    if (params.raydium && params.cheapest.venue === "raydium") {
+      if (jupiter && this.jupiterIsRaydium(jupiter)) {
         return "Raydium is the cheapest venue. Jupiter’s quote is the same Raydium CLMM hop.";
       }
       return "Raydium is the cheapest executable venue at this size.";
     }
-    if (params.raydium && params.cheapest && params.cheapest.venue !== "raydium") {
+    if (params.raydium && params.cheapest.venue !== "raydium") {
       const extra = this.deltaBps(params.raydium, params.cheapest);
-      return `Jupiter is cheaper by ${extra} bps. Raydium still has a live pool — PegLens will not hide that.`;
+      return `${winnerName} is cheaper than Raydium by ${extra} bps. Raydium still has a live pool — PegLens will not hide that.`;
     }
-    if (!params.raydium && jupiter) {
-      const hops = jupiter.hopLabels.join(" → ") || "aggregator hops";
-      return `Raydium has no pool. Secondary quote: Jupiter via ${hops}. Indicative only — not a fill.`;
-    }
-    return "Indicative quotes only. PegLens does not send transactions.";
+    const hops = params.cheapest.hopLabels.join(" → ") || "direct";
+    return `Raydium has no pool. ${winnerName} quoted via ${hops}. Indicative only — not a fill.`;
   }
 
   static jupiterIsRaydium(quote: SwapQuote): boolean {

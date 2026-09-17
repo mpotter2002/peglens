@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BoardComposer } from "@/lib/board/BoardComposer";
 import { BoardView } from "@/lib/ui/BoardView";
+import { RouteBoard } from "@/lib/routes/RouteBoard";
 import type { BoardMark, BoardPayload, PegVsEquity, SwapQuote } from "@/lib/types";
 
 describe("BoardView", () => {
@@ -77,6 +78,23 @@ describe("BoardView", () => {
     expect(BoardView.quoteLine(miss)).toBe("Raydium has no route for this mint");
   });
 
+  it("sorts live quotes cheapest-first and only badges a compared winner", () => {
+    const card = RouteBoard.card({
+      kind: "xstock",
+      label: "TSLAx",
+      mint: "mint",
+      decimals: 8,
+      quotes: [
+        quote({ venue: "raydium", available: true, effectiveUsdPerShare: 366.17, hopLabels: ["Raydium"] }),
+        quote({ venue: "meteora", available: true, effectiveUsdPerShare: 366.4, hopLabels: ["Meteora DLMM"] }),
+        quote({ venue: "jupiter", available: true, effectiveUsdPerShare: 365.51, hopLabels: ["Riptide"] }),
+      ],
+    });
+    expect(BoardView.sortedQuotes(card).map((row) => row.venue)).toEqual(["jupiter", "raydium", "meteora"]);
+    expect(BoardView.marksCheapest(card, card.quotes[2]!)).toBe(true);
+    expect(BoardView.marksCheapest(card, card.quotes[0]!)).toBe(false);
+  });
+
   it("only labels the route cheapest when quotes actually compare", () => {
     const cheapest = board({
       cheapestHonest: {
@@ -106,7 +124,7 @@ describe("BoardView", () => {
     });
     expect(BoardView.routeKicker(cheapest)).toBe("Cheapest honest route");
     expect(BoardView.routeHeadline(cheapest)).toBe("Buy TSLAx on Jupiter");
-    expect(BoardView.routeStory(cheapest)).toMatch(/lowest quoted USD\/share/i);
+    expect(BoardView.routeStory(cheapest)).toMatch(/Cheapest is first/i);
     expect(BoardView.ctaLabel(cheapest)).toBe("Open Jupiter swap");
     expect(BoardView.routeKicker(venueOnly)).toBe("Trade on Raydium");
     expect(BoardView.routeStory(venueOnly)).toMatch(/not a cheapest claim/i);

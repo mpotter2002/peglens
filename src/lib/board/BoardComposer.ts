@@ -8,6 +8,7 @@ import { DemoHost } from "@/lib/demo/DemoHost";
 import { MintResolver } from "@/lib/wrappers/MintResolver";
 import { RaydiumRouter } from "@/lib/routes/RaydiumRouter";
 import { JupiterRouter } from "@/lib/routes/JupiterRouter";
+import { MeteoraRouter } from "@/lib/routes/MeteoraRouter";
 import { RouteBoard } from "@/lib/routes/RouteBoard";
 import { TtlCache } from "@/lib/cache/TtlCache";
 import type {
@@ -322,16 +323,17 @@ export class BoardComposer {
       return RouteBoard.card({ kind, label, mint: null, decimals: null, quotes: [] });
     }
     try {
-      const [raydium, jupiter] = await Promise.all([
+      const [raydium, jupiter, meteora] = await Promise.all([
         RaydiumRouter.quote({ outputMint: mint.mint, outDecimals: mint.decimals, inAtomic }),
         JupiterRouter.quote({ outputMint: mint.mint, outDecimals: mint.decimals, inAtomic }),
+        MeteoraRouter.quote({ outputMint: mint.mint, outDecimals: mint.decimals, inAtomic }),
       ]);
       return RouteBoard.card({
         kind,
         label,
         mint: mint.mint,
         decimals: mint.decimals,
-        quotes: [raydium, jupiter],
+        quotes: [raydium, jupiter, meteora],
       });
     } catch {
       return RouteBoard.card({ kind, label, mint: mint.mint, decimals: mint.decimals, quotes: [] });
@@ -372,7 +374,7 @@ export class BoardComposer {
         : null;
     const venue = picked.quote.venue;
     const label = picked.card.label;
-    const venueName = venue === "raydium" ? "Raydium" : venue === "jupiter" ? "Jupiter" : "dFlow";
+    const venueName = RouteBoard.venueTitle(venue);
     const headline = claimCheapest ? `Buy ${label} on ${venueName}` : `Trade ${label} on ${venueName}`;
     const caveat = claimCheapest
       ? "Indicative quote for $100 USDC in, 50 bps slippage. PegLens never fills or signs."

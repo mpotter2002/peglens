@@ -16,7 +16,7 @@ export type DemoHostInfo = {
   label: string;
 };
 
-export type RouteVenue = "raydium" | "jupiter" | "dflow";
+export type RouteVenue = "raydium" | "jupiter" | "meteora" | "dflow";
 
 export type PegSign = "premium" | "discount" | "flat" | "unavailable";
 

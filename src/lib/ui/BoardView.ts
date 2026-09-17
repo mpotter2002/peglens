@@ -1,4 +1,5 @@
 import { Format } from "@/lib/ui/Format";
+import { RouteBoard } from "@/lib/routes/RouteBoard";
 import type {
   BoardMark,
   BoardPayload,
@@ -130,9 +131,7 @@ export class BoardView {
     if (board.cheapestHonest.claimCheapest) {
       return "Cheapest honest route";
     }
-    const venue = board.cheapestHonest.venue;
-    const venueName = venue === "raydium" ? "Raydium" : venue === "jupiter" ? "Jupiter" : "dFlow";
-    return `Trade on ${venueName}`;
+    return `Trade on ${RouteBoard.venueTitle(board.cheapestHonest.venue)}`;
   }
 
   static routeStory(board: BoardPayload): string {
@@ -143,10 +142,7 @@ export class BoardView {
     if (!featured.claimCheapest) {
       return "This is a venue quote, not a cheapest claim. PegLens only heard one executable venue at this size.";
     }
-    if (featured.venue === "raydium") {
-      return "Raydium quoted the lowest executable USD/share at this size. Other venues stay listed so you can compare.";
-    }
-    return "This CTA follows the lowest quoted USD/share. Raydium is listed when it has a pool — PegLens will not hide it.";
+    return "Cheapest is first. Raydium, Jupiter, and Meteora stay listed so you can compare — PegLens will not hide a live pool or invent a missing one.";
   }
 
   static ctaLabel(board: BoardPayload): string | null {
@@ -165,7 +161,36 @@ export class BoardView {
   }
 
   static venueLabel(venue: RouteVenue): string {
-    return venue;
+    return RouteBoard.venueTitle(venue);
+  }
+
+  static liveQuotes(card: WrapperRouteCard): SwapQuote[] {
+    return card.quotes
+      .filter((quote) => quote.available && quote.effectiveUsdPerShare)
+      .slice()
+      .sort((a, b) => (a.effectiveUsdPerShare ?? Infinity) - (b.effectiveUsdPerShare ?? Infinity));
+  }
+
+  static sortedQuotes(card: WrapperRouteCard): SwapQuote[] {
+    const live = this.liveQuotes(card);
+    const rest = card.quotes.filter((quote) => !live.includes(quote));
+    return [...live, ...rest];
+  }
+
+  static marksCheapest(card: WrapperRouteCard, quote: SwapQuote): boolean {
+    return this.liveQuotes(card).length >= 2 && card.cheapest?.venue === quote.venue && quote.available;
+  }
+
+  static alternativeQuotes(board: BoardPayload): SwapQuote[] {
+    const featured = board.cheapestHonest;
+    if (!featured) {
+      return [];
+    }
+    const card = board.routes.find((route) => route.kind === featured.wrapper);
+    if (!card) {
+      return [];
+    }
+    return this.liveQuotes(card).filter((quote) => quote.venue !== featured.venue && quote.url);
   }
 
   static columns(board: BoardPayload): MarkColumn[] {

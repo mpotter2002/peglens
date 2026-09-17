@@ -2,7 +2,7 @@
 
 Live **broker vs chain** board for tokenized stocks on Solana.
 
-Pick a ticker. Compare the US cash/equity mark to the xStock and Ondo wrappers. Read the premium or discount. Take the cheapest honest route — **the lowest quoted venue**, with Raydium as the CTA only when it wins (or ties) on price. Empty cells stay empty.
+Pick a ticker. Compare the US cash/equity mark to the xStock and Ondo wrappers. Read the premium or discount. Take the cheapest honest route among **Raydium, Jupiter, and Meteora**. Raydium stays listed; cheapest is the primary CTA only when quotes compare. Empty cells stay empty.
 
 **Judges (one sitting):** [SUBMISSION.md](./SUBMISSION.md) · recording: [DEMO.md](./DEMO.md)
 
@@ -40,7 +40,7 @@ curl -s http://localhost:3000/api/board/AAPL | head
 1. **Cash hero** + comparison table: **Broker / cash · xStock · Ondo**. Source chip is **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
 2. Session badge. Outside 09:30–16:00 ET the cash column wears a **Last cash print** badge — wrappers keep quoting.
 3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero.
-4. **Raydium ticket** (right rail). **Cheapest honest route** only when quotes compare and that venue wins. **AAPLx** is Raydium when Raydium is cheapest (Jupiter often agrees by routing through Raydium CLMM). If Jupiter is cheaper, the CTA follows Jupiter. **AAPLon**: Raydium currently has no pool — the board says so and shows Jupiter if it quotes. Caption: **Quotes never execute**.
+4. **Venue ticket** (right rail). **Cheapest honest route** only when quotes compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** are listed (honest empties if a venue has no pool). Caption: **Quotes never execute**.
 5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. CTAs open the **cheapest quoted venue** when two venues compare, otherwise a named venue CTA with no cheapest claim. PegLens never signs or fills.
 6. Type **ZZZZ** in ticker search (or tap a popular chip, or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
 
@@ -54,7 +54,7 @@ Without a key, PegLens still uses:
 
 - Hermes `/v2/price_feeds` for feed ids + US cash session hours (public)
 - [Pyth Terminal](https://app.pyth.com) snapshots for the printed prices
-- Raydium Trade API + Jupiter Swap API for executable quotes
+- Raydium Trade API + Jupiter Swap API for executable quotes. Meteora is a Jupiter quote restricted to Meteora hops (no invented pool).
 
 ### Hosted preview (no secrets)
 
@@ -84,8 +84,8 @@ npm run build
 | --- | --- | --- |
 | Equity / xStock / Ondo marks | Pyth (Hermes or Terminal) | No |
 | US cash open/closed | Pyth `market_hours` + NY clock | No |
-| AAPLx swap | Raydium `compute/swap-base-in` | No — indicative quote |
-| AAPLon swap | Raydium if a pool exists, else Jupiter | No — **ROUTE_NOT_FOUND** is shown |
+| AAPLx swap | Raydium, Jupiter, Meteora (Meteora-only hops) | No — indicative quote |
+| AAPLon swap | Same three venues; Raydium often **ROUTE_NOT_FOUND** | No — missing pools stay empty |
 | Fills / wallet / custody | — | Out of scope. CTA opens the venue. |
 
 ## Stack
