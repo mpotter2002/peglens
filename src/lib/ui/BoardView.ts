@@ -241,9 +241,6 @@ export class BoardView {
     if (board.session.cashOpen && board.session.nextClose) {
       return `Cash close ${SessionClock.formatNy(board.session.nextClose)}.`;
     }
-    if (!board.session.cashOpen && board.session.nextOpen) {
-      return `Next cash open ${SessionClock.formatNy(board.session.nextOpen)}.`;
-    }
     return null;
   }
 
