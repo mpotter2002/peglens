@@ -1,3 +1,4 @@
+import { BrandWordmark } from "@/components/BrandWordmark";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function BoardSkeleton() {
@@ -9,7 +10,9 @@ export function BoardSkeleton() {
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Tokenized equity desk
             </p>
-            <h1 className="font-display text-3xl leading-none tracking-tight sm:text-4xl">PegLens</h1>
+            <h1 className="mt-1 leading-none">
+              <BrandWordmark />
+            </h1>
           </div>
           <Skeleton className="h-9 w-64" />
         </div>

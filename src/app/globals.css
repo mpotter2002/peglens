@@ -173,6 +173,18 @@
   -webkit-backdrop-filter: blur(8px) saturate(1.05);
 }
 
+.brand-wordmark {
+  width: 12.75rem;
+  height: 2.65rem;
+}
+
+@media (min-width: 640px) {
+  .brand-wordmark {
+    width: 14.5rem;
+    height: 3rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .desk-header {
     transition: none;

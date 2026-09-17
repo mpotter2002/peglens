@@ -31,7 +31,14 @@ export const metadata: Metadata = {
   title: "PegLens — broker vs chain",
   description:
     "Live premium/discount board for tokenized stocks. Equity vs xStock vs Ondo, with an honest cheapest-venue CTA when quotes compare.",
-  icons: { icon: "/favicon.svg" },
+  icons: {
+    icon: [
+      { url: "/brand/icon-dark.png", type: "image/png" },
+      { url: "/brand/icon-light.png", type: "image/png", media: "(prefers-color-scheme: light)" },
+      { url: "/brand/icon-dark.png", type: "image/png", media: "(prefers-color-scheme: dark)" },
+    ],
+    apple: [{ url: "/brand/icon-dark.png", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
