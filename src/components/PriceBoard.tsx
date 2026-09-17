@@ -111,7 +111,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
   return (
     <div className="min-h-screen">
       <DeskChrome board={board} />
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[11.5rem_minmax(0,1fr)_minmax(18rem,20.5rem)]">
+      <div className="mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-6 sm:px-6 lg:grid-cols-[11.5rem_minmax(0,1fr)_minmax(18rem,20.5rem)]">
         <TickerRail active={active} onSelect={selectTicker} />
         <main className={cn("min-w-0", pending && "opacity-60 transition-opacity")}>
           <QuoteHero board={board} />
@@ -121,7 +121,8 @@ export function PriceBoard({ ticker }: { ticker: string }) {
               <AlertDescription>{BoardView.emptyBody(board.ticker)}</AlertDescription>
             </Alert>
           ) : null}
-          <MarkTable board={board} />
+          <MarkList board={board} className="mt-6 md:hidden" />
+          <MarkTable board={board} className="mt-6 hidden md:block" />
           {error ? <p className="mt-3 font-mono text-xs text-premium">{error}</p> : null}
         </main>
         <RouteTicket board={board} />
@@ -268,10 +269,55 @@ function QuoteHero({ board }: { board: BoardPayload }) {
   );
 }
 
-function MarkTable({ board }: { board: BoardPayload }) {
+function MarkList({ board, className }: { board: BoardPayload; className?: string }) {
   const sessionClosed = !board.session.cashOpen;
   return (
-    <Card className="mt-6 py-0">
+    <div className={cn("space-y-2", className)}>
+      {BoardView.columns(board).map((column) => {
+        const empty = column.mark.priceUsd === null;
+        const lastPrint = BoardView.lastCashPrint(column.mark, sessionClosed);
+        const note = BoardView.rowNote(column.mark);
+        return (
+          <div
+            key={column.mark.kind}
+            className={cn("rounded-xl bg-card p-3 ring-1 ring-foreground/10", column.reference && "bg-muted/40")}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-session">{column.mark.label}</p>
+                <p className="text-xs text-muted-foreground">{column.mark.issuer}</p>
+              </div>
+              {lastPrint ? (
+                <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
+              ) : (
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {BoardView.sourceOrSession(column.mark, sessionClosed)}
+                </span>
+              )}
+            </div>
+            <div className="mt-2 flex items-baseline justify-between gap-3">
+              <div>
+                <p className="price-xl font-mono text-2xl">{Format.compactUsd(column.mark.priceUsd)}</p>
+                <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
+                  {BoardView.printMeta(column.mark)}
+                </p>
+              </div>
+              <p className={cn("text-right font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
+                {BoardView.pegCopy(column.peg, true)}
+              </p>
+            </div>
+            {note ? <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{note}</p> : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MarkTable({ board, className }: { board: BoardPayload; className?: string }) {
+  const sessionClosed = !board.session.cashOpen;
+  return (
+    <Card className={cn("py-0", className)}>
       <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -334,13 +380,13 @@ function RouteTicket({ board }: { board: BoardPayload }) {
   const featured = board.cheapestHonest;
   const cta = BoardView.ctaLabel(board);
   return (
-    <Card className="h-fit lg:sticky lg:top-4">
+    <Card className="h-fit min-w-0 overflow-hidden lg:sticky lg:top-4">
       <CardHeader>
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-session">Cheapest honest route</p>
-        <CardTitle className="font-display text-2xl font-normal leading-tight">
+        <CardTitle className="font-display text-2xl font-normal leading-tight break-words">
           {BoardView.routeHeadline(board)}
         </CardTitle>
-        <CardDescription>{BoardView.routeStory()}</CardDescription>
+        <CardDescription className="text-pretty">{BoardView.routeStory()}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {featured ? (
@@ -405,12 +451,12 @@ function RouteQuotes({ card }: { card: WrapperRouteCard }) {
           <TableBody>
             {card.quotes.map((quote) => (
               <TableRow key={quote.venue} className="hover:bg-transparent">
-                <TableCell className="px-0 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                <TableCell className="px-0 font-mono text-[11px] uppercase tracking-widest whitespace-normal text-muted-foreground">
                   {BoardView.venueLabel(quote.venue)}
                 </TableCell>
                 <TableCell
                   className={cn(
-                    "px-0 text-right font-mono text-[11px]",
+                    "px-0 text-right font-mono text-[11px] whitespace-normal",
                     quote.available ? "text-foreground" : "text-premium",
                   )}
                 >
