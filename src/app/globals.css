@@ -43,8 +43,10 @@ body {
   color: var(--color-paper);
 }
 
-a {
-  color: inherit;
+@layer base {
+  a {
+    color: inherit;
+  }
 }
 
 .hairline {

@@ -285,7 +285,7 @@ function MarkCard({
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold">{mark.label}</p>
           <p className="text-xs text-mute">{mark.issuer}</p>
         </div>
-        {mark.kind === "equity" && sessionClosed ? (
+        {mark.kind === "equity" && sessionClosed && mark.priceUsd !== null ? (
           <span className="rounded-full bg-gold/15 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-gold">
             Last cash print
           </span>
@@ -338,7 +338,7 @@ function RouteStrip({ board }: { board: BoardPayload }) {
             href={featured.ctaUrl}
             target="_blank"
             rel="noreferrer"
-            className="rounded-full bg-paper px-5 py-3 text-sm font-medium text-ink"
+            className="rounded-full bg-paper px-5 py-3 text-sm font-medium text-ink no-underline"
           >
             {featured.ctaLabel}
           </a>
