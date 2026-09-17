@@ -1,4 +1,3 @@
-import { BoardComposer } from "@/lib/board/BoardComposer";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
 import { PriceBoard } from "@/components/PriceBoard";
 
@@ -11,6 +10,5 @@ export default async function Page({
 }) {
   const params = await searchParams;
   const ticker = TickerUniverse.normalize(params.t);
-  const board = await BoardComposer.compose(ticker);
-  return <PriceBoard initial={board} />;
+  return <PriceBoard ticker={ticker} />;
 }

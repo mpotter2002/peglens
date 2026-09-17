@@ -6,20 +6,60 @@ Pick a ticker. Compare the US cash/equity mark to the xStock and Ondo wrappers. 
 
 Hackathon: [Stocklana](https://hackathons.solana.com/hackathons/stocklana) · main track + Pyth bounty.
 
-## 60-second demo
+## How to test (60 seconds)
 
-1. `npm install && npm run dev`
-2. Open [http://localhost:3000](http://localhost:3000) — it lands on **AAPL**.
-3. Read the three marks: broker/cash · xStock · Ondo. After hours, the cash column wears a **last cash print** badge.
-4. Check the peg (bps vs cash) and the **cheapest honest route**. For AAPLx this is usually Raydium (Jupiter often agrees by routing 100% through Raydium CLMM). For AAPLon, Raydium currently has no pool — the board says so and shows Jupiter/Meteora if it quotes.
-5. Switch ticker from the rail. Nothing is a fill. The **Local / test** and **Not a broker** chips stay on.
+No API keys required. Empty cells are empty — PegLens does not invent prices or fills.
 
-## How to run
+### Local
 
 ```bash
 npm install
 npm run dev
 ```
+
+Open [http://localhost:3000](http://localhost:3000). It lands on **AAPL**.
+
+Smoke:
+
+```bash
+curl -s http://localhost:3000/api/health
+curl -s http://localhost:3000/api/board/AAPL | head
+```
+
+`host.label` should read `Local / test`. `pythKeyConfigured` is `false` unless you set a key.
+
+### What you should see on AAPL
+
+1. Three marks: **Broker / cash · xStock · Ondo**. Source chip is **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
+2. Session badge. Outside 09:30–16:00 ET the cash column wears a **Last cash print** badge — wrappers keep quoting.
+3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero.
+4. **Cheapest honest route** is Raydium-first. For **AAPLx** that is usually Raydium (Jupiter often agrees by routing through Raydium CLMM). For **AAPLon**, Raydium currently has no pool — the board says so and shows Jupiter if it quotes.
+5. Switch ticker from the rail. CTAs open the venue. PegLens never signs or fills. The **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on.
+
+If a mark or route is missing, that is the honest empty state. Try AAPL again, or set the optional Hermes key below.
+
+### Optional Hermes key
+
+Copy `.env.example` to `.env.local` and set `PYTH_API_KEY` for signed [Hermes](https://docs.pyth.network/price-feeds/core/api-instances-and-providers/hermes) ticks. Get a key at [app.pyth.com](https://app.pyth.com). Never commit it.
+
+Without a key, PegLens still uses:
+
+- Hermes `/v2/price_feeds` for feed ids + US cash session hours (public)
+- [Pyth Terminal](https://app.pyth.com) snapshots for the printed prices
+- Raydium Trade API + Jupiter Swap API for executable quotes
+
+### Hosted preview (no secrets)
+
+This repo deploys as a stock Next.js app. **Do not add env vars** for the first preview — the demo is designed to run without `PYTH_API_KEY`.
+
+1. [Import the GitHub repo on Vercel](https://vercel.com/new/clone?repository-url=https://github.com/mpotter2002/peglens).
+2. Leave Environment Variables empty.
+3. Deploy. Open the preview URL — same AAPL path as local. The chip should read **Vercel preview**.
+4. Optional later: add `PYTH_API_KEY` on the Vercel project for signed Hermes ticks. Not required.
+
+Hobby functions are capped at ~10s. PegLens times out upstreams (~2.5–3s) and renders honest empties instead of hanging.
+
+## Checks
 
 ```bash
 npm test
@@ -27,14 +67,6 @@ npm run lint
 npm run typecheck
 npm run build
 ```
-
-Optional: copy `.env.example` to `.env.local` and set `PYTH_API_KEY` for signed [Hermes](https://docs.pyth.network/price-feeds/core/api-instances-and-providers/hermes) ticks. Without a key, PegLens still uses:
-
-- Hermes `/v2/price_feeds` for feed ids + US cash session hours (public)
-- [Pyth Terminal](https://app.pyth.com) snapshots for the printed prices
-- Raydium Trade API + Jupiter Swap API for executable quotes
-
-Never commit a key.
 
 ## What is real vs not
 
@@ -48,13 +80,13 @@ Never commit a key.
 
 ## Stack
 
-Thin Next.js App Router app. Classes with static methods wrap public APIs. No rebuilt AMMs, no basket custody, no fake prices.
+Thin Next.js App Router app. Classes with static methods wrap public APIs. The first HTML paint is a skeleton; `/api/board/AAPL` loads live marks so a slow venue cannot blank the page. Dark desk palette matches Stocklana (no light-mode toggle in this prototype).
 
 ## Remaining gaps (v1)
 
 - Hermes latest-price is authenticated since the Aug 2026 Pyth Core upgrade. Demo works without a key via Terminal snapshots; a key makes ticks stricter.
 - dFlow quotes 403 without an API key — omitted rather than faked.
-- No hosted deploy in this PR (run locally or point Vercel at the branch).
+- Light-mode toggle is a follow-up. The board already ships `color-scheme: dark`.
 - PreStocks / Tessera are link-outs only, as scoped.
 
 Out of scope: Stocklana basket custody, Clawpump/Meteora DBC rebuilds, pitch decks.

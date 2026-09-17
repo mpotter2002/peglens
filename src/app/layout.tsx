@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
@@ -26,9 +26,14 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.svg" },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#100e0c",
+  colorScheme: "dark",
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`dark ${display.variable} ${sans.variable} ${mono.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

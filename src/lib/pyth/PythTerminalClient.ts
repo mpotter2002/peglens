@@ -1,3 +1,4 @@
+import { HttpJson } from "@/lib/net/HttpJson";
 import { TtlCache } from "@/lib/cache/TtlCache";
 
 export type TerminalQuote = {
@@ -8,22 +9,23 @@ export type TerminalQuote = {
 
 export class PythTerminalClient {
   static async quote(symbol: string): Promise<TerminalQuote | null> {
-    return TtlCache.remember(`pyth-terminal:${symbol}`, 15_000, async () => {
-    const encoded = encodeURIComponent(symbol);
-    const url = `https://app.pyth.com/explore/${encoded}`;
-    const response = await fetch(url, {
-      headers: {
-        accept: "text/html",
-        "user-agent": "PegLens/0.1 (https://github.com/mpotter2002/peglens)",
+    return TtlCache.remember(
+      `pyth-terminal:${symbol}`,
+      15_000,
+      async () => {
+        const encoded = encodeURIComponent(symbol);
+        const url = `https://app.pyth.com/explore/${encoded}`;
+        const { ok, text } = await HttpJson.get(url, {
+          headers: { accept: "text/html" },
+          timeoutMs: 3_000,
+        });
+        if (!ok) {
+          return null;
+        }
+        return this.parse(symbol, text);
       },
-      cache: "no-store",
-    });
-    if (!response.ok) {
-      return null;
-    }
-    const html = await response.text();
-    return this.parse(symbol, html);
-    });
+      { skipCache: (value) => value === null },
+    );
   }
 
   static parse(symbol: string, html: string): TerminalQuote | null {

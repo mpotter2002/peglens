@@ -1,57 +1,91 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { BoardSkeleton } from "@/components/BoardSkeleton";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
+import { DemoScript } from "@/lib/demo/DemoScript";
 import { Format } from "@/lib/ui/Format";
 import type { BoardPayload, PegVsEquity, BoardMark, WrapperRouteCard } from "@/lib/types";
 
-export function PriceBoard({ initial }: { initial: BoardPayload }) {
-  const [board, setBoard] = useState(initial);
+export function PriceBoard({ ticker }: { ticker: string }) {
+  const [active, setActive] = useState(ticker);
+  const [board, setBoard] = useState<BoardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    setBoard(initial);
-  }, [initial]);
+    setActive(TickerUniverse.normalize(ticker));
+  }, [ticker]);
 
   useEffect(() => {
-    const tick = async () => {
+    let cancelled = false;
+    const load = async (silent: boolean) => {
+      if (!silent) {
+        setPending(true);
+      }
       try {
-        const response = await fetch(`/api/board/${board.ticker}`, { cache: "no-store" });
+        const response = await fetch(`/api/board/${active}`, { cache: "no-store" });
         if (!response.ok) {
           throw new Error(`Board ${response.status}`);
         }
         const next = (await response.json()) as BoardPayload;
+        if (cancelled) {
+          return;
+        }
         startTransition(() => {
           setBoard(next);
           setError(null);
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Refresh failed");
-      }
-    };
-    const id = window.setInterval(tick, 8_000);
-    return () => window.clearInterval(id);
-  }, [board.ticker]);
-
-  function selectTicker(ticker: string) {
-    const next = TickerUniverse.normalize(ticker);
-    window.history.replaceState(null, "", `/?t=${next}`);
-    setPending(true);
-    void (async () => {
-      try {
-        const response = await fetch(`/api/board/${next}`, { cache: "no-store" });
-        if (response.ok) {
-          setBoard((await response.json()) as BoardPayload);
-          setError(null);
-        } else {
-          setError(`Board ${response.status}`);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Refresh failed");
         }
       } finally {
-        setPending(false);
+        if (!cancelled) {
+          setPending(false);
+        }
       }
-    })();
+    };
+    void load(false);
+    const id = window.setInterval(() => void load(true), 8_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [active, retry]);
+
+  function selectTicker(nextTicker: string) {
+    const next = TickerUniverse.normalize(nextTicker);
+    window.history.replaceState(null, "", `/?t=${next}`);
+    setActive(next);
+  }
+
+  if (!board || board.ticker !== active) {
+    return (
+      <div>
+        <BoardSkeleton />
+        {error ? (
+          <div className="fixed bottom-6 left-1/2 z-10 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 hairline rounded-2xl bg-ink p-4 shadow-lg">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">Board unreachable</p>
+            <p className="mt-2 text-sm text-paper-dim">
+              {error}. PegLens will not invent marks while the API is down.
+            </p>
+            <button
+              type="button"
+              className="mt-3 rounded-full bg-paper px-4 py-2 text-sm text-ink"
+              onClick={() => {
+                setError(null);
+                setRetry((value) => value + 1);
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   return (
@@ -60,9 +94,10 @@ export function PriceBoard({ initial }: { initial: BoardPayload }) {
         <Header board={board} />
         <DemoPath />
         <div className="mt-6 grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
-          <TickerRail active={board.ticker} onSelect={selectTicker} />
+          <TickerRail active={active} onSelect={selectTicker} />
           <main className={pending ? "opacity-60 transition-opacity" : "transition-opacity"}>
             <Identity board={board} />
+            <EmptyMarks board={board} />
             <div className="mt-5 grid gap-3 md:grid-cols-3">
               <MarkCard mark={board.equity} peg={null} sessionClosed={!board.session.cashOpen} />
               {board.wrappers.map((wrapper) => (
@@ -108,7 +143,7 @@ function Header({ board }: { board: BoardPayload }) {
       <div className="flex flex-col items-end gap-2">
         <div className="flex flex-wrap justify-end gap-2">
           <span className="hairline rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-gold-2">
-            Local / test
+            {board.host.label}
           </span>
           <span className="hairline rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-mute">
             Not a broker
@@ -137,19 +172,13 @@ function SessionBadge({ board }: { board: BoardPayload }) {
 }
 
 function DemoPath() {
-  const steps = [
-    "Land on AAPL",
-    "Read cash vs wrappers",
-    "Note the peg",
-    "Cheapest route (Raydium first)",
-    "Try a second ticker",
-  ];
   return (
     <ol className="mt-6 grid gap-2 sm:grid-cols-5">
-      {steps.map((step, index) => (
-        <li key={step} className="hairline rounded-xl px-3 py-2">
-          <span className="font-mono text-[10px] text-gold">0{index + 1}</span>
-          <p className="text-xs text-paper-dim">{step}</p>
+      {DemoScript.steps().map((step) => (
+        <li key={step.n} className="hairline rounded-xl px-3 py-2">
+          <span className="font-mono text-[10px] text-gold">{step.n}</span>
+          <p className="text-xs text-paper">{step.title}</p>
+          <p className="mt-1 text-[11px] leading-snug text-mute">{step.lookFor}</p>
         </li>
       ))}
     </ol>
@@ -213,8 +242,26 @@ function Identity({ board }: { board: BoardPayload }) {
         <p className="font-mono text-[11px] uppercase tracking-widest text-mute">
           {board.pythKeyConfigured ? "Pyth Hermes" : "Pyth Terminal snapshot"}
         </p>
-        <p className="text-xs text-mute">Quotes never execute · $100 USDC sample size</p>
+        <p className="text-xs text-mute">Quotes never execute · ${board.quoteSizeUsd} USDC sample size</p>
       </div>
+    </div>
+  );
+}
+
+function EmptyMarks({ board }: { board: BoardPayload }) {
+  const noPrints =
+    board.equity.priceUsd === null && board.wrappers.every((wrapper) => wrapper.priceUsd === null);
+  if (!noPrints) {
+    return null;
+  }
+  return (
+    <div className="hairline mt-5 rounded-2xl p-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">No live prints</p>
+      <p className="mt-2 text-sm text-paper-dim">
+        Pyth did not return a cash, xStock, or Ondo mark for {board.ticker}. PegLens will not invent a
+        price. Try AAPL, or set <span className="font-mono text-gold-2">PYTH_API_KEY</span> for signed
+        Hermes ticks.
+      </p>
     </div>
   );
 }
@@ -230,6 +277,7 @@ function MarkCard({
 }) {
   const pegClass =
     peg?.sign === "premium" ? "text-premium" : peg?.sign === "discount" ? "text-discount" : "text-mute";
+  const empty = mark.priceUsd === null;
   return (
     <article className="hairline rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2">
@@ -237,7 +285,7 @@ function MarkCard({
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold">{mark.label}</p>
           <p className="text-xs text-mute">{mark.issuer}</p>
         </div>
-        {mark.kind === "equity" && sessionClosed ? (
+        {mark.kind === "equity" && sessionClosed && mark.priceUsd !== null ? (
           <span className="rounded-full bg-gold/15 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-gold">
             Last cash print
           </span>
@@ -246,7 +294,14 @@ function MarkCard({
         )}
       </div>
       <p className="price-xl mt-4 font-mono text-4xl">{Format.compactUsd(mark.priceUsd)}</p>
-      <p className="mt-1 truncate font-mono text-[11px] text-mute">{mark.symbol}</p>
+      {empty ? (
+        <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-premium">No print</p>
+      ) : (
+        <p className="mt-1 truncate font-mono text-[11px] text-mute">
+          {mark.symbol}
+          {mark.publishTime ? ` · ${Format.relative(mark.publishTime)}` : mark.source === "pyth-terminal" ? " · terminal snapshot" : ""}
+        </p>
+      )}
       {peg ? (
         <p className={`mt-3 font-mono text-sm ${pegClass}`}>
           {peg.sign === "unavailable"
@@ -270,7 +325,9 @@ function RouteStrip({ board }: { board: BoardPayload }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">Cheapest honest route</p>
-          <h2 className="font-display mt-1 text-3xl italic">{featured?.headline ?? "No executable route right now"}</h2>
+          <h2 className="font-display mt-1 text-3xl italic">
+            {featured?.headline ?? "No executable route right now — PegLens will not invent a pool"}
+          </h2>
           <p className="mt-2 max-w-2xl text-sm text-paper-dim">
             Raydium is the default story because it still dominates Solana xStocks volume. If it has no pool, PegLens
             says so and shows the next real quote.
@@ -281,7 +338,7 @@ function RouteStrip({ board }: { board: BoardPayload }) {
             href={featured.ctaUrl}
             target="_blank"
             rel="noreferrer"
-            className="rounded-full bg-paper px-5 py-3 text-sm font-medium text-ink"
+            className="rounded-full bg-paper px-5 py-3 text-sm font-medium text-ink no-underline"
           >
             {featured.ctaLabel}
           </a>
@@ -326,7 +383,7 @@ function RouteCard({ card }: { card: WrapperRouteCard }) {
       <p className="mt-2 font-mono text-[11px] text-mute">mint {Format.mint(card.mint)}</p>
       <ul className="mt-3 space-y-2">
         {quotes.length === 0 ? (
-          <li className="text-xs text-mute">No venue quoted.</li>
+          <li className="text-xs text-mute">No venue quoted — not a simulated fill.</li>
         ) : (
           quotes.map((quote) => (
             <li key={quote.venue} className="flex items-baseline justify-between gap-3 font-mono text-xs">
