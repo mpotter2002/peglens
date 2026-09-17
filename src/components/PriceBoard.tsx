@@ -62,7 +62,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
     setActive(next);
   }
 
-  if (!board) {
+  if (!board || board.ticker !== active) {
     return (
       <div>
         <BoardSkeleton />
@@ -94,7 +94,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
         <Header board={board} />
         <DemoPath />
         <div className="mt-6 grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
-          <TickerRail active={board.ticker} onSelect={selectTicker} />
+          <TickerRail active={active} onSelect={selectTicker} />
           <main className={pending ? "opacity-60 transition-opacity" : "transition-opacity"}>
             <Identity board={board} />
             <EmptyMarks board={board} />
