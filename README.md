@@ -34,7 +34,7 @@ curl -s http://localhost:3000/api/board/AAPL | head
 2. Session badge. Outside 09:30–16:00 ET the cash column wears a **Last cash print** badge — wrappers keep quoting.
 3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero.
 4. **Cheapest honest route** is Raydium-first. For **AAPLx** that is usually Raydium (Jupiter often agrees by routing through Raydium CLMM). For **AAPLon**, Raydium currently has no pool — the board says so and shows Jupiter if it quotes.
-5. Switch ticker from the rail. CTAs open the venue. PegLens never signs or fills. The **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on.
+5. Switch ticker from the rail. CTAs open the venue. PegLens never signs or fills. The **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. Theme toggle (header) cycles System → Light → Dark; default is dark.
 
 If a mark or route is missing, that is the honest empty state. Try AAPL again, or set the optional Hermes key below.
 
@@ -80,13 +80,13 @@ npm run build
 
 ## Stack
 
-Thin Next.js App Router app. Classes with static methods wrap public APIs. The first HTML paint is a skeleton; `/api/board/AAPL` loads live marks so a slow venue cannot blank the page. Dark desk palette matches Stocklana (no light-mode toggle in this prototype).
+Thin Next.js App Router app. Classes with static methods wrap public APIs. The first HTML paint is a skeleton; `/api/board/AAPL` loads live marks so a slow venue cannot blank the page. The desk uses shadcn/ui with a dark-first theme and a System → Light → Dark toggle (`peglens.theme`).
 
 ## Remaining gaps (v1)
 
 - Hermes latest-price is authenticated since the Aug 2026 Pyth Core upgrade. Demo works without a key via Terminal snapshots; a key makes ticks stricter.
 - dFlow quotes 403 without an API key — omitted rather than faked.
-- Light-mode toggle is a follow-up. The board already ships `color-scheme: dark`.
+- Theme defaults to dark; the header toggle cycles System → Light → Dark. Preference stays in the browser.
 - PreStocks / Tessera are link-outs only, as scoped.
 
 Out of scope: Stocklana basket custody, Clawpump/Meteora DBC rebuilds, pitch decks.

@@ -1,11 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { BoardSkeleton } from "@/components/BoardSkeleton";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
 import { DemoScript } from "@/lib/demo/DemoScript";
+import { BoardView } from "@/lib/ui/BoardView";
 import { Format } from "@/lib/ui/Format";
-import type { BoardPayload, PegVsEquity, BoardMark, WrapperRouteCard } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import type { BoardPayload, WrapperRouteCard } from "@/lib/types";
+import type { PegTone } from "@/lib/ui/BoardView";
 
 export function PriceBoard({ ticker }: { ticker: string }) {
   const [active, setActive] = useState(ticker);
@@ -67,121 +85,109 @@ export function PriceBoard({ ticker }: { ticker: string }) {
       <div>
         <BoardSkeleton />
         {error ? (
-          <div className="fixed bottom-6 left-1/2 z-10 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 hairline rounded-2xl bg-ink p-4 shadow-lg">
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">Board unreachable</p>
-            <p className="mt-2 text-sm text-paper-dim">
+          <Alert className="fixed bottom-6 left-1/2 z-10 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 bg-card shadow-lg">
+            <AlertTitle className="font-mono text-[10px] uppercase tracking-[0.22em]">Board unreachable</AlertTitle>
+            <AlertDescription>
               {error}. PegLens will not invent marks while the API is down.
-            </p>
-            <button
-              type="button"
-              className="mt-3 rounded-full bg-paper px-4 py-2 text-sm text-ink"
-              onClick={() => {
-                setError(null);
-                setRetry((value) => value + 1);
-              }}
-            >
-              Retry
-            </button>
-          </div>
+            </AlertDescription>
+            <div className="mt-3">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setError(null);
+                  setRetry((value) => value + 1);
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          </Alert>
         ) : null}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-4 py-5 sm:px-8 sm:py-8">
-      <div className="mx-auto max-w-6xl">
-        <Header board={board} />
-        <DemoPath />
-        <div className="mt-6 grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
-          <TickerRail active={active} onSelect={selectTicker} />
-          <main className={pending ? "opacity-60 transition-opacity" : "transition-opacity"}>
-            <Identity board={board} />
-            <EmptyMarks board={board} />
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <MarkCard mark={board.equity} peg={null} sessionClosed={!board.session.cashOpen} />
-              {board.wrappers.map((wrapper) => (
-                <MarkCard
-                  key={wrapper.kind}
-                  mark={wrapper}
-                  peg={wrapper.peg}
-                  sessionClosed={!board.session.cashOpen}
-                />
-              ))}
-            </div>
-            <RouteStrip board={board} />
-            {error ? <p className="mt-3 font-mono text-xs text-premium">{error}</p> : null}
-          </main>
-        </div>
-        <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-rule)] pt-4 text-xs text-mute">
-          <p>PegLens MVP · Stocklana · Pyth marks · Raydium-first routes · no custody, no fills.</p>
-          <p className="flex gap-3">
-            <a className="underline decoration-[var(--color-rule)]" href="https://prestocks.com/products" target="_blank" rel="noreferrer">
-              PreStocks
-            </a>
-            <a className="underline decoration-[var(--color-rule)]" href="https://app.tessera.pe" target="_blank" rel="noreferrer">
-              Tessera
-            </a>
-          </p>
-          <p className="font-mono">{Format.clock(board.fetchedAt)}</p>
-        </footer>
+    <div className="min-h-screen">
+      <DeskChrome board={board} />
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[12.5rem_minmax(0,1fr)_19.5rem]">
+        <TickerRail active={active} onSelect={selectTicker} />
+        <main className={cn("min-w-0", pending && "opacity-60 transition-opacity")}>
+          <QuoteHero board={board} />
+          {BoardView.noLivePrints(board) ? (
+            <Alert className="mt-5">
+              <AlertTitle>{BoardView.emptyTitle()}</AlertTitle>
+              <AlertDescription>{BoardView.emptyBody(board.ticker)}</AlertDescription>
+            </Alert>
+          ) : null}
+          <MarkGrid board={board} />
+          {error ? <p className="mt-3 font-mono text-xs text-premium">{error}</p> : null}
+        </main>
+        <RouteTicket board={board} />
       </div>
+      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
+        <p>PegLens · Stocklana · Pyth marks · Raydium-first routes · no custody, no fills.</p>
+        <p className="flex gap-3">
+          <a className="underline decoration-border underline-offset-4" href="https://prestocks.com/products" target="_blank" rel="noreferrer">
+            PreStocks
+          </a>
+          <a className="underline decoration-border underline-offset-4" href="https://app.tessera.pe" target="_blank" rel="noreferrer">
+            Tessera
+          </a>
+        </p>
+        <p className="font-mono">{Format.clock(board.fetchedAt)}</p>
+      </footer>
     </div>
   );
 }
 
-function Header({ board }: { board: BoardPayload }) {
-  return (
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-gold">Tokenized equity desk</p>
-        <h1 className="font-display mt-1 text-5xl italic leading-none text-paper sm:text-6xl">PegLens</h1>
-        <p className="mt-2 max-w-xl text-sm text-paper-dim">
-          Same ticker. Broker mark vs chain wrappers. Premium, discount, and the cheapest honest route.
-        </p>
-      </div>
-      <div className="flex flex-col items-end gap-2">
-        <div className="flex flex-wrap justify-end gap-2">
-          <span className="hairline rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-gold-2">
-            {board.host.label}
-          </span>
-          <span className="hairline rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-mute">
-            Not a broker
-          </span>
-        </div>
-        <SessionBadge board={board} />
-      </div>
-    </header>
-  );
-}
-
-function SessionBadge({ board }: { board: BoardPayload }) {
+function DeskChrome({ board }: { board: BoardPayload }) {
   const closed = board.session.afterHoursNarrative;
   return (
-    <div
-      className={`hairline min-w-[16rem] rounded-2xl px-4 py-3 ${closed ? "bg-gold/10" : "bg-discount/10"}`}
-      aria-live="polite"
-    >
-      <div className="flex items-center gap-2">
-        <span className={`live-dot h-2 w-2 rounded-full ${closed ? "bg-gold" : "bg-discount"}`} />
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold-2">{board.session.label}</p>
+    <header className="border-b border-border/80">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 items-baseline gap-3">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              Tokenized equity desk
+            </p>
+            <h1 className="font-display text-2xl leading-none tracking-tight">PegLens</h1>
+          </div>
+          <p className="hidden max-w-sm text-sm text-muted-foreground md:block">
+            Broker mark vs chain wrappers. Premium, discount, cheapest honest route.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{board.host.label}</Badge>
+          <Badge variant="secondary">Not a broker</Badge>
+          <div
+            className={cn(
+              "flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5",
+              closed ? "bg-session/10" : "bg-discount/10",
+            )}
+            aria-live="polite"
+          >
+            <span className={cn("live-dot size-1.5 rounded-full", closed ? "bg-session" : "bg-discount")} />
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              {board.session.label}
+            </span>
+          </div>
+          <ThemeToggle />
+        </div>
       </div>
-      <p className="mt-1 max-w-sm text-sm leading-snug text-paper-dim">{board.session.detail}</p>
-    </div>
-  );
-}
-
-function DemoPath() {
-  return (
-    <ol className="mt-6 grid gap-2 sm:grid-cols-5">
-      {DemoScript.steps().map((step) => (
-        <li key={step.n} className="hairline rounded-xl px-3 py-2">
-          <span className="font-mono text-[10px] text-gold">{step.n}</span>
-          <p className="text-xs text-paper">{step.title}</p>
-          <p className="mt-1 text-[11px] leading-snug text-mute">{step.lookFor}</p>
-        </li>
-      ))}
-    </ol>
+      <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-6">
+        <ol className="flex gap-2 overflow-x-auto text-[11px] text-muted-foreground">
+          {DemoScript.steps().map((step) => (
+            <li key={step.n} className="flex shrink-0 items-baseline gap-1.5 rounded-md bg-muted/60 px-2 py-1">
+              <span className="font-mono text-[10px] text-session">{step.n}</span>
+              <span className="text-foreground">{step.title}</span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-1 hidden text-[11px] text-muted-foreground lg:block">{board.session.detail}</p>
+      </div>
+    </header>
   );
 }
 
@@ -189,9 +195,9 @@ function TickerRail({ active, onSelect }: { active: string; onSelect: (ticker: s
   const [draft, setDraft] = useState(active);
   useEffect(() => setDraft(active), [active]);
   return (
-    <aside className="hairline h-fit rounded-2xl p-3">
-      <p className="px-2 font-mono text-[10px] uppercase tracking-[0.22em] text-mute">Ticker</p>
-      <nav className="mt-2 flex gap-2 overflow-x-auto lg:flex-col">
+    <aside className="h-fit rounded-xl bg-card p-3 ring-1 ring-foreground/10">
+      <p className="px-1 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ticker</p>
+      <nav className="mt-2 flex gap-1 overflow-x-auto lg:flex-col">
         {TickerUniverse.list().map((ticker) => {
           const selected = ticker === active;
           return (
@@ -199,9 +205,12 @@ function TickerRail({ active, onSelect }: { active: string; onSelect: (ticker: s
               key={ticker}
               type="button"
               onClick={() => onSelect(ticker)}
-              className={`rounded-xl px-3 py-2 text-left font-mono text-sm ${
-                selected ? "bg-paper text-ink" : "text-paper-dim hover:bg-white/5"
-              }`}
+              className={cn(
+                "rounded-md px-2.5 py-1.5 text-left font-mono text-sm transition-colors",
+                selected
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
               aria-current={selected ? "page" : undefined}
             >
               {ticker}
@@ -209,59 +218,69 @@ function TickerRail({ active, onSelect }: { active: string; onSelect: (ticker: s
           );
         })}
       </nav>
+      <Separator className="my-3" />
       <form
-        className="mt-3 border-t border-[var(--color-rule)] pt-3"
         onSubmit={(event) => {
           event.preventDefault();
           onSelect(draft);
         }}
       >
-        <label className="px-2 font-mono text-[10px] uppercase tracking-[0.22em] text-mute" htmlFor="ticker-input">
+        <label className="px-1 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground" htmlFor="ticker-input">
           Any US ticker
         </label>
-        <input
+        <Input
           id="ticker-input"
           value={draft}
           onChange={(event) => setDraft(event.target.value.toUpperCase())}
           maxLength={6}
-          className="mt-1 w-full rounded-xl bg-transparent px-3 py-2 font-mono text-sm outline-none ring-1 ring-[var(--color-rule)] focus:ring-gold"
+          className="mt-1 font-mono"
         />
       </form>
     </aside>
   );
 }
 
-function Identity({ board }: { board: BoardPayload }) {
+function QuoteHero({ board }: { board: BoardPayload }) {
+  const sessionClosed = !board.session.cashOpen;
+  const lastPrint = BoardView.lastCashPrint(board.equity, sessionClosed);
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <p className="font-display text-4xl italic leading-none">{board.ticker}</p>
-        <p className="mt-1 text-sm text-paper-dim">{board.name}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-display text-4xl leading-none tracking-tight sm:text-5xl">{board.ticker}</h2>
+          {lastPrint ? (
+            <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
+          ) : null}
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">{board.name}</p>
+        <p className="price-xl font-display mt-3 text-5xl leading-none sm:text-6xl">
+          {Format.compactUsd(board.equity.priceUsd)}
+        </p>
+        <p className="mt-2 font-mono text-xs text-muted-foreground">{BoardView.heroCaption(board.equity)}</p>
       </div>
       <div className="text-right">
-        <p className="font-mono text-[11px] uppercase tracking-widest text-mute">
-          {board.pythKeyConfigured ? "Pyth Hermes" : "Pyth Terminal snapshot"}
+        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+          {BoardView.sourceCaption(board)}
         </p>
-        <p className="text-xs text-mute">Quotes never execute · ${board.quoteSizeUsd} USDC sample size</p>
+        <p className="text-xs text-muted-foreground">{BoardView.quoteSizeCaption(board)}</p>
       </div>
     </div>
   );
 }
 
-function EmptyMarks({ board }: { board: BoardPayload }) {
-  const noPrints =
-    board.equity.priceUsd === null && board.wrappers.every((wrapper) => wrapper.priceUsd === null);
-  if (!noPrints) {
-    return null;
-  }
+function MarkGrid({ board }: { board: BoardPayload }) {
+  const sessionClosed = !board.session.cashOpen;
   return (
-    <div className="hairline mt-5 rounded-2xl p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">No live prints</p>
-      <p className="mt-2 text-sm text-paper-dim">
-        Pyth did not return a cash, xStock, or Ondo mark for {board.ticker}. PegLens will not invent a
-        price. Try AAPL, or set <span className="font-mono text-gold-2">PYTH_API_KEY</span> for signed
-        Hermes ticks.
-      </p>
+    <div className="mt-6 grid gap-3 md:grid-cols-3">
+      {BoardView.columns(board).map((column) => (
+        <MarkCard
+          key={column.mark.kind}
+          mark={column.mark}
+          peg={column.peg}
+          reference={column.reference}
+          sessionClosed={sessionClosed}
+        />
+      ))}
     </div>
   );
 }
@@ -269,134 +288,146 @@ function EmptyMarks({ board }: { board: BoardPayload }) {
 function MarkCard({
   mark,
   peg,
+  reference,
   sessionClosed,
 }: {
-  mark: BoardMark;
-  peg: PegVsEquity | null;
+  mark: ReturnType<typeof BoardView.columns>[number]["mark"];
+  peg: ReturnType<typeof BoardView.columns>[number]["peg"];
+  reference: boolean;
   sessionClosed: boolean;
 }) {
-  const pegClass =
-    peg?.sign === "premium" ? "text-premium" : peg?.sign === "discount" ? "text-discount" : "text-mute";
   const empty = mark.priceUsd === null;
+  const lastPrint = BoardView.lastCashPrint(mark, sessionClosed);
   return (
-    <article className="hairline rounded-2xl p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold">{mark.label}</p>
-          <p className="text-xs text-mute">{mark.issuer}</p>
+    <Card size="sm" className={reference ? "ring-foreground/16" : undefined}>
+      <CardHeader className="gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-session">{mark.label}</p>
+            <CardDescription>{mark.issuer}</CardDescription>
+          </div>
+          {lastPrint ? (
+            <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
+          ) : (
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              {BoardView.sourceOrSession(mark, sessionClosed)}
+            </span>
+          )}
         </div>
-        {mark.kind === "equity" && sessionClosed && mark.priceUsd !== null ? (
-          <span className="rounded-full bg-gold/15 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-gold">
-            Last cash print
-          </span>
-        ) : (
-          <span className="font-mono text-[10px] uppercase tracking-widest text-mute">{mark.source}</span>
-        )}
-      </div>
-      <p className="price-xl mt-4 font-mono text-4xl">{Format.compactUsd(mark.priceUsd)}</p>
-      {empty ? (
-        <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-premium">No print</p>
-      ) : (
-        <p className="mt-1 truncate font-mono text-[11px] text-mute">
-          {mark.symbol}
-          {mark.publishTime ? ` · ${Format.relative(mark.publishTime)}` : mark.source === "pyth-terminal" ? " · terminal snapshot" : ""}
+      </CardHeader>
+      <CardContent>
+        <p className="price-xl font-mono text-3xl">{Format.compactUsd(mark.priceUsd)}</p>
+        <p className={cn("mt-1 font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
+          {empty ? "No print" : BoardView.printAge(mark)}
         </p>
-      )}
-      {peg ? (
-        <p className={`mt-3 font-mono text-sm ${pegClass}`}>
-          {peg.sign === "unavailable"
-            ? "No peg yet"
-            : peg.sign === "flat"
-              ? `In line · ${Format.bps(peg.bps)} vs cash`
-              : `${Format.bps(peg.bps)} vs cash · ${Format.usd(peg.dollars, 2)}`}
-        </p>
-      ) : (
-        <p className="mt-3 text-sm text-paper-dim">Reference mark for every wrapper on this board.</p>
-      )}
-      {mark.note ? <p className="mt-3 text-xs leading-snug text-mute">{mark.note}</p> : null}
-    </article>
+        <p className={cn("mt-3 font-mono text-sm", pegClass(BoardView.pegTone(peg)))}>{BoardView.pegCopy(peg)}</p>
+        {mark.note ? <p className="mt-3 text-xs leading-snug text-muted-foreground">{mark.note}</p> : null}
+      </CardContent>
+    </Card>
   );
 }
 
-function RouteStrip({ board }: { board: BoardPayload }) {
+function pegClass(tone: PegTone): string {
+  if (tone === "premium") {
+    return "text-premium";
+  }
+  if (tone === "discount") {
+    return "text-discount";
+  }
+  return "text-muted-foreground";
+}
+
+function RouteTicket({ board }: { board: BoardPayload }) {
   const featured = board.cheapestHonest;
+  const cta = BoardView.ctaLabel(board);
   return (
-    <section className="hairline mt-5 rounded-2xl p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">Cheapest honest route</p>
-          <h2 className="font-display mt-1 text-3xl italic">
-            {featured?.headline ?? "No executable route right now — PegLens will not invent a pool"}
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm text-paper-dim">
-            Raydium is the default story because it still dominates Solana xStocks volume. If it has no pool, PegLens
-            says so and shows the next real quote.
-          </p>
-        </div>
-        {featured?.ctaUrl ? (
-          <a
-            href={featured.ctaUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full bg-paper px-5 py-3 text-sm font-medium text-ink no-underline"
-          >
-            {featured.ctaLabel}
-          </a>
+    <Card className="h-fit lg:sticky lg:top-4">
+      <CardHeader>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-session">Cheapest honest route</p>
+        <CardTitle className="font-display text-2xl font-normal leading-tight">
+          {BoardView.routeHeadline(board)}
+        </CardTitle>
+        <CardDescription>{BoardView.routeStory()}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {featured ? (
+          <p className="font-mono text-sm text-session">{BoardView.featuredMetrics(board)}</p>
         ) : (
-          <span className="rounded-full bg-white/5 px-5 py-3 text-sm text-mute">No swap CTA</span>
+          <Empty className="border border-dashed py-5">
+            <EmptyHeader>
+              <EmptyTitle>No swap CTA</EmptyTitle>
+              <EmptyDescription>PegLens will not invent a pool or a fill.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
-      </div>
-      {featured ? (
-        <p className="mt-3 font-mono text-sm text-gold-2">
-          {Format.usd(featured.effectiveUsdPerShare, 2)} / share
-          {featured.vsEquityBps !== null ? ` · ${Format.bps(featured.vsEquityBps)} vs cash mark` : ""} · {featured.caveat}
-        </p>
-      ) : null}
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {board.routes.map((card) => (
-          <RouteCard key={card.kind} card={card} />
-        ))}
-      </div>
-      {board.redemptionRate ? (
-        <p className="mt-4 font-mono text-xs text-mute">
-          {board.redemptionRate.symbol}: {board.redemptionRate.value === null ? "—" : board.redemptionRate.value.toFixed(4)} ·{" "}
-          {board.redemptionRate.note}
-        </p>
-      ) : null}
-      {board.warnings.length > 0 ? (
-        <ul className="mt-3 space-y-1 text-xs text-mute">
-          {board.warnings.map((warning) => (
-            <li key={warning}>· {warning}</li>
+        {cta && featured?.ctaUrl ? (
+          <Button asChild size="lg" className="w-full">
+            <a href={featured.ctaUrl} target="_blank" rel="noreferrer">
+              {cta}
+              <ArrowUpRight />
+            </a>
+          </Button>
+        ) : null}
+        <div className="space-y-3">
+          {BoardView.routeCards(board).map((card) => (
+            <RouteQuotes key={card.kind} card={card} />
           ))}
-        </ul>
+        </div>
+        {board.redemptionRate ? (
+          <p className="font-mono text-xs text-muted-foreground">
+            {board.redemptionRate.symbol}: {board.redemptionRate.value === null ? "—" : board.redemptionRate.value.toFixed(4)} ·{" "}
+            {board.redemptionRate.note}
+          </p>
+        ) : null}
+      </CardContent>
+      {board.warnings.length > 0 ? (
+        <CardFooter className="flex-col items-start gap-1">
+          {board.warnings.map((warning) => (
+            <p key={warning} className="text-xs text-muted-foreground">
+              · {warning}
+            </p>
+          ))}
+        </CardFooter>
       ) : null}
-    </section>
+    </Card>
   );
 }
 
-function RouteCard({ card }: { card: WrapperRouteCard }) {
-  const quotes = useMemo(() => card.quotes, [card.quotes]);
+function RouteQuotes({ card }: { card: WrapperRouteCard }) {
   return (
-    <div className="rounded-xl bg-white/5 p-3">
-      <p className="font-mono text-[11px] uppercase tracking-widest text-gold-2">{card.label}</p>
-      <p className="mt-1 text-sm text-paper-dim">{card.honesty}</p>
-      <p className="mt-2 font-mono text-[11px] text-mute">mint {Format.mint(card.mint)}</p>
-      <ul className="mt-3 space-y-2">
-        {quotes.length === 0 ? (
-          <li className="text-xs text-mute">No venue quoted — not a simulated fill.</li>
-        ) : (
-          quotes.map((quote) => (
-            <li key={quote.venue} className="flex items-baseline justify-between gap-3 font-mono text-xs">
-              <span className="uppercase tracking-widest text-mute">{quote.venue}</span>
-              <span className={quote.available ? "text-paper" : "text-premium"}>
-                {quote.available
-                  ? `${Format.usd(quote.effectiveUsdPerShare, 2)} · ${quote.hopLabels.join(" → ") || "direct"}`
-                  : quote.reason}
-              </span>
-            </li>
-          ))
-        )}
-      </ul>
+    <div>
+      <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">{card.label}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{card.honesty}</p>
+      <p className="mt-1 font-mono text-[11px] text-muted-foreground">mint {Format.mint(card.mint)}</p>
+      {card.quotes.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">{BoardView.emptyQuotes()}</p>
+      ) : (
+        <Table className="mt-1">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="h-7 px-0 text-[10px] uppercase tracking-widest">Venue</TableHead>
+              <TableHead className="h-7 px-0 text-right text-[10px] uppercase tracking-widest">Quote</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {card.quotes.map((quote) => (
+              <TableRow key={quote.venue} className="hover:bg-transparent">
+                <TableCell className="px-0 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                  {BoardView.venueLabel(quote.venue)}
+                </TableCell>
+                <TableCell
+                  className={cn(
+                    "px-0 text-right font-mono text-[11px]",
+                    quote.available ? "text-foreground" : "text-premium",
+                  )}
+                >
+                  {BoardView.quoteLine(quote)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
