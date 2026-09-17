@@ -8,7 +8,7 @@ Pick a ticker. Compare the US cash/equity mark to the xStock and Ondo wrappers. 
 
 | | |
 | --- | --- |
-| Local | `npm install && npm run dev` → [http://localhost:3000](http://localhost:3000) (lands on **AAPL**) |
+| Local | `npm install && npm run dev` → [http://localhost:3000](http://localhost:3000) (lands on **most popular** list) |
 | **HOSTED_URL** | **TBD** — Vercel GitHub App is not installed on this repo yet ([install](https://github.com/apps/vercel)) |
 | Keys | None required |
 
@@ -24,7 +24,7 @@ No API keys required. Empty cells are empty — PegLens does not invent prices o
 npm install && npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). It lands on **AAPL**.
+Open [http://localhost:3000](http://localhost:3000). It lands on the **most popular** ticker list. Open **AAPL** (or search) to drill into the desk.
 
 Smoke:
 
@@ -37,11 +37,11 @@ curl -s http://localhost:3000/api/board/AAPL | head
 
 ### What you should see on AAPL
 
-1. **Cash hero** + comparison table: **Broker / cash · xStock · Ondo**. Source chip is **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
-2. Session badge. Outside 09:30–16:00 ET the cash column wears a **Last cash print** badge — wrappers keep quoting.
-3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero.
-4. **Venue ticket** (right rail). **Cheapest honest route** only when quotes compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** are listed (honest empties if a venue has no pool). Caption: **Quotes never execute**.
-5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. CTAs open the **cheapest quoted venue** when two venues compare, otherwise a named venue CTA with no cheapest claim. PegLens never signs or fills.
+1. **Cash hero** with company label (Pyth feed name, else the demo catalog). Three mark cards: **Broker / cash · xStock · Ondo**, each with peg, Pyth feed id, and mint when known. Source is **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
+2. Session strip. Outside 09:30–16:00 ET cash wears a **Last cash print** badge — wrappers keep quoting. That is a last print, not a live bid/ask.
+3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero. **How to read this peg** is on the desk.
+4. **Venue comparison** on the page (plus the right-rail CTA). **Cheapest honest route** only when quotes compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** are listed (honest empties if a venue has no pool). Caption: **Quotes never execute**.
+5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. Wordmark returns **home**. PegLens never signs or fills.
 6. Type **ZZZZ** in ticker search (or tap a popular chip, or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
 
 If a mark or route is missing, that is the honest empty state. Try AAPL again, or set the optional Hermes key below.
@@ -90,7 +90,7 @@ npm run build
 
 ## Stack
 
-Thin Next.js App Router app. Classes with static methods wrap public APIs. The first HTML paint is a skeleton; `/api/board/AAPL` loads live marks so a slow venue cannot blank the page. The desk uses shadcn/ui with a light-first theme and a System → Light → Dark toggle (`peglens.theme`).
+Thin Next.js App Router app. Classes with static methods wrap public APIs. `/` is the popular-ticker home. A desk (`/?t=AAPL`) paints a skeleton, then `/api/board/AAPL` loads live marks so a slow venue cannot blank the page. The desk uses shadcn/ui with a light-first theme and a System → Light → Dark toggle (`peglens.theme`).
 
 ## Remaining gaps (v1)
 

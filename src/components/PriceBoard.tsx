@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
+import { AppChrome } from "@/components/AppChrome";
 import { BoardSkeleton } from "@/components/BoardSkeleton";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
-import { DemoScript } from "@/lib/demo/DemoScript";
 import { BoardView } from "@/lib/ui/BoardView";
 import { Format } from "@/lib/ui/Format";
 import { cn } from "@/lib/utils";
@@ -109,21 +108,27 @@ export function PriceBoard({ ticker }: { ticker: string }) {
 
   return (
     <div className="min-h-screen">
-      <DeskChrome board={board} />
-      <div className="mx-auto max-w-7xl space-y-6 overflow-x-hidden px-4 py-6 sm:px-6">
-        <TickerDesk active={active} onSelect={selectTicker} sessionDetail={board.session.detail} />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20.5rem)]">
-          <main className={cn("min-w-0", pending && "opacity-60 transition-opacity")}>
+      <AppChrome host={board.host} sessionLabel={board.session.label} sessionClosed={board.session.afterHoursNarrative} />
+      <div className="mx-auto max-w-7xl space-y-5 overflow-x-hidden px-4 py-5 sm:px-6">
+        <TickerDesk active={active} onSelect={selectTicker} />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,21rem)]">
+          <main className={cn("min-w-0 space-y-5", pending && "opacity-60 transition-opacity")}>
             <QuoteHero board={board} />
+            <SessionStrip board={board} />
             {BoardView.noLivePrints(board) ? (
-              <Alert className="mt-5">
+              <Alert>
                 <AlertTitle>{BoardView.emptyTitle()}</AlertTitle>
                 <AlertDescription>{BoardView.emptyBody(board.ticker)}</AlertDescription>
               </Alert>
             ) : null}
-            <MarkList board={board} className="mt-6 md:hidden" />
-            <MarkTable board={board} className="mt-6 hidden md:block" />
-            {error ? <p className="mt-3 font-mono text-xs text-premium">{error}</p> : null}
+            <MarkCards board={board} />
+            <VenueStrip board={board} />
+            <div className="grid gap-5 md:grid-cols-2">
+              <WrapperIdentity board={board} />
+              <PegGuide ticker={board.ticker} />
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{BoardView.pageHonesty()}</p>
+            {error ? <p className="font-mono text-xs text-premium">{error}</p> : null}
           </main>
           <RouteTicket board={board} />
         </div>
@@ -144,133 +149,65 @@ export function PriceBoard({ ticker }: { ticker: string }) {
   );
 }
 
-function useScrolled(threshold = 0): boolean {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const update = () => {
-      const next = window.scrollY > threshold;
-      setScrolled((prev) => (prev === next ? prev : next));
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  }, [threshold]);
-  return scrolled;
-}
-
-function DeskChrome({ board }: { board: BoardPayload }) {
-  const scrolled = useScrolled();
-  const closed = board.session.afterHoursNarrative;
-  return (
-    <header
-      className={cn(
-        "desk-header sticky top-0 z-40 w-full",
-        scrolled && "is-scrolled",
-      )}
-    >
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="flex min-w-0 items-baseline gap-3">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              Tokenized equity desk
-            </p>
-            <h1 className="font-display text-3xl leading-none tracking-tight sm:text-4xl">PegLens</h1>
-          </div>
-          <p className="hidden max-w-sm text-sm text-muted-foreground md:block">
-            Broker mark vs chain wrappers. Premium, discount, honest venue CTA.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{board.host.label}</Badge>
-          <Badge variant="secondary">Not a broker</Badge>
-          <div
-            className={cn(
-              "flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5",
-              closed ? "bg-session/10" : "bg-discount/10",
-            )}
-            aria-live="polite"
-          >
-            <span className={cn("live-dot size-1.5 rounded-full", closed ? "bg-session" : "bg-discount")} />
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              {board.session.label}
-            </span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </div>
-    </header>
-  );
-}
-
 function TickerDesk({
   active,
   onSelect,
-  sessionDetail,
 }: {
   active: string;
   onSelect: (ticker: string) => void;
-  sessionDetail: string;
 }) {
   const [draft, setDraft] = useState(active);
   useEffect(() => setDraft(active), [active]);
   return (
-    <section className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-      <ol className="flex gap-2 overflow-x-auto text-[11px] text-muted-foreground">
-        {DemoScript.steps().map((step) => (
-          <li key={step.n} className="flex shrink-0 items-baseline gap-1.5 rounded-md bg-muted/60 px-2 py-1">
-            <span className="font-mono text-[10px] text-session">{step.n}</span>
-            <span className="text-foreground">{step.title}</span>
-          </li>
-        ))}
-      </ol>
-      <p className="mt-1 hidden text-[11px] text-muted-foreground lg:block">{sessionDetail}</p>
+    <section className="rounded-lg bg-card px-2.5 py-2 ring-1 ring-foreground/10">
       <form
-        className="mt-4"
+        className="flex flex-col gap-2 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault();
           onSelect(draft);
         }}
       >
-        <label
-          className="px-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
-          htmlFor="ticker-input"
-        >
-          Search any US ticker
-        </label>
-        <div className="relative mt-1">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            id="ticker-input"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value.toUpperCase())}
-            maxLength={6}
-            placeholder="AAPL"
-            className="h-10 pl-8 font-mono"
-          />
+        <div className="min-w-0 flex-1">
+          <label
+            className="px-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
+            htmlFor="ticker-input"
+          >
+            Search any US ticker
+          </label>
+          <div className="relative mt-1">
+            <Search className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="ticker-input"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value.toUpperCase())}
+              maxLength={6}
+              placeholder="AAPL"
+              className="h-8 pl-7 font-mono"
+            />
+          </div>
         </div>
+        <nav className="flex min-w-0 flex-nowrap gap-1 overflow-x-auto pb-0.5 sm:max-w-[62%]" aria-label="Most popular tickers">
+          {TickerUniverse.list().map((ticker) => {
+            const selected = ticker === active;
+            return (
+              <button
+                key={ticker}
+                type="button"
+                onClick={() => onSelect(ticker)}
+                className={cn(
+                  "shrink-0 rounded-md px-2 py-1 font-mono text-xs transition-colors",
+                  selected
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+                aria-current={selected ? "page" : undefined}
+              >
+                {ticker}
+              </button>
+            );
+          })}
+        </nav>
       </form>
-      <p className="mt-4 px-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Most popular</p>
-      <nav className="mt-2 flex flex-nowrap gap-1 overflow-x-auto pb-0.5" aria-label="Most popular tickets">
-        {TickerUniverse.list().map((ticker) => {
-          const selected = ticker === active;
-          return (
-            <button
-              key={ticker}
-              type="button"
-              onClick={() => onSelect(ticker)}
-              className={cn(
-                "shrink-0 rounded-md px-2.5 py-1.5 font-mono text-sm transition-colors",
-                selected
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-              aria-current={selected ? "page" : undefined}
-            >
-              {ticker}
-            </button>
-          );
-        })}
-      </nav>
     </section>
   );
 }
@@ -278,43 +215,67 @@ function TickerDesk({
 function QuoteHero({ board }: { board: BoardPayload }) {
   const sessionClosed = !board.session.cashOpen;
   const lastPrint = BoardView.lastCashPrint(board.equity, sessionClosed);
+  const name = BoardView.companyLabel(board);
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <div className="flex flex-wrap items-center gap-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          <Link href="/" className="underline decoration-border underline-offset-4">
+            All tickers
+          </Link>
+          <span className="text-border"> / </span>
+          Desk
+        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
           <h2 className="font-display text-4xl leading-none tracking-tight sm:text-5xl">{board.ticker}</h2>
           {lastPrint ? (
             <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
           ) : null}
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">{board.name}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{name}</p>
         <p className="price-xl font-display mt-3 text-5xl leading-none sm:text-6xl">
           {Format.compactUsd(board.equity.priceUsd)}
         </p>
         <p className="mt-2 font-mono text-xs text-muted-foreground">{BoardView.heroCaption(board.equity)}</p>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">{BoardView.cashPrintContext(board)}</p>
       </div>
       <div className="text-right">
         <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
           {BoardView.sourceCaption(board)}
         </p>
         <p className="text-xs text-muted-foreground">{BoardView.quoteSizeCaption(board)}</p>
+        <p className="mt-1 font-mono text-[11px] text-muted-foreground">{BoardView.markFeedLine(board.equity)}</p>
       </div>
     </div>
   );
 }
 
-function MarkList({ board, className }: { board: BoardPayload; className?: string }) {
+function SessionStrip({ board }: { board: BoardPayload }) {
+  const hint = BoardView.nextSessionHint(board);
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2">
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-session">{board.session.label}</p>
+      <p className="min-w-0 flex-1 text-[12px] leading-snug text-muted-foreground">
+        {board.session.detail}
+        {hint ? ` ${hint}` : ""}
+      </p>
+    </div>
+  );
+}
+
+function MarkCards({ board }: { board: BoardPayload }) {
   const sessionClosed = !board.session.cashOpen;
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className="grid gap-3 md:grid-cols-3">
       {BoardView.columns(board).map((column) => {
         const empty = column.mark.priceUsd === null;
         const lastPrint = BoardView.lastCashPrint(column.mark, sessionClosed);
         const note = BoardView.rowNote(column.mark);
+        const route = BoardView.wrapperCard(board, column.mark.kind);
         return (
           <div
             key={column.mark.kind}
-            className={cn("rounded-xl bg-card p-3 ring-1 ring-foreground/10", column.reference && "bg-muted/40")}
+            className={cn("rounded-xl bg-card p-3.5 ring-1 ring-foreground/10", column.reference && "bg-muted/40")}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -329,15 +290,18 @@ function MarkList({ board, className }: { board: BoardPayload; className?: strin
                 </span>
               )}
             </div>
-            <div className="mt-2">
-              <p className="price-xl font-mono text-2xl">{Format.compactUsd(column.mark.priceUsd)}</p>
-              <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
-                {BoardView.printMeta(column.mark)}
-              </p>
-              <p className={cn("mt-2 font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
-                {BoardView.pegCopy(column.peg, true)}
-              </p>
-            </div>
+            <p className="price-xl font-mono mt-3 text-2xl">{Format.compactUsd(column.mark.priceUsd)}</p>
+            <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
+              {BoardView.printMeta(column.mark)}
+            </p>
+            <p className={cn("mt-2 font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
+              {BoardView.pegCopy(column.peg, true)}
+            </p>
+            <p className="mt-3 font-mono text-[10px] leading-snug text-muted-foreground">{BoardView.markSymbolLine(column.mark)}</p>
+            <p className="font-mono text-[10px] leading-snug text-muted-foreground">{BoardView.markFeedLine(column.mark)}</p>
+            {route ? (
+              <p className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{BoardView.wrapperMintLine(route)}</p>
+            ) : null}
             {note ? <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{note}</p> : null}
           </div>
         );
@@ -346,54 +310,72 @@ function MarkList({ board, className }: { board: BoardPayload; className?: strin
   );
 }
 
-function MarkTable({ board, className }: { board: BoardPayload; className?: string }) {
-  const sessionClosed = !board.session.cashOpen;
+function VenueStrip({ board }: { board: BoardPayload }) {
   return (
-    <Card className={cn("py-0", className)}>
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[28%] whitespace-normal text-[10px] uppercase tracking-widest">Venue</TableHead>
-            <TableHead className="w-[22%] text-right text-[10px] uppercase tracking-widest">Print</TableHead>
-            <TableHead className="w-[28%] text-right text-[10px] uppercase tracking-widest">Vs cash</TableHead>
-            <TableHead className="w-[22%] text-right text-[10px] uppercase tracking-widest">Source</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {BoardView.columns(board).map((column) => {
-            const empty = column.mark.priceUsd === null;
-            const lastPrint = BoardView.lastCashPrint(column.mark, sessionClosed);
-            const note = BoardView.rowNote(column.mark);
-            return (
-              <TableRow key={column.mark.kind} className={column.reference ? "bg-muted/40" : undefined}>
-                <TableCell className="align-top whitespace-normal">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-session">{column.mark.label}</p>
-                  <p className="text-xs text-muted-foreground">{column.mark.issuer}</p>
-                  {note ? <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{note}</p> : null}
-                </TableCell>
-                <TableCell className="align-top text-right">
-                  <p className="price-xl font-mono text-xl">{Format.compactUsd(column.mark.priceUsd)}</p>
-                  <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
-                    {BoardView.printMeta(column.mark)}
-                  </p>
-                </TableCell>
-                <TableCell className={cn("align-top whitespace-normal text-right font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
-                  {BoardView.pegCopy(column.peg, true)}
-                </TableCell>
-                <TableCell className="align-top whitespace-normal text-right">
-                  {lastPrint ? (
-                    <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
-                  ) : (
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                      {BoardView.sourceOrSession(column.mark, sessionClosed)}
-                    </span>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+    <Card size="sm">
+      <CardHeader className="border-b">
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-session">Venue comparison</p>
+        <CardTitle className="font-display text-xl font-normal">{BoardView.routeHeadline(board)}</CardTitle>
+        <CardDescription>{BoardView.routeStory(board)}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {BoardView.routeCards(board).map((card) => (
+          <RouteQuotes key={card.kind} card={card} />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function WrapperIdentity({ board }: { board: BoardPayload }) {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Wrapper identity</p>
+        <CardTitle className="font-display text-lg font-normal">xStock and Ondo inventory</CardTitle>
+        <CardDescription>Names and mints from issuer/token inventory when PegLens can resolve them. Missing stays empty.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {BoardView.routeCards(board).map((card) => {
+          const source = BoardView.inventorySourceLabel(card.nameSource);
+          return (
+            <div key={card.kind}>
+              <p className="font-mono text-[11px] uppercase tracking-widest text-session">{card.label}</p>
+              <p className="text-sm">{BoardView.wrapperIdentityTitle(card)}</p>
+              <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{BoardView.wrapperMintLine(card)}</p>
+              {source && card.name ? (
+                <p className="text-[11px] text-muted-foreground">Name source: {source}</p>
+              ) : null}
+            </div>
+          );
+        })}
+        {board.redemptionRate ? (
+          <p className="font-mono text-xs text-muted-foreground">
+            {board.redemptionRate.symbol}: {board.redemptionRate.value === null ? "—" : board.redemptionRate.value.toFixed(4)} ·{" "}
+            {board.redemptionRate.note}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">No xStock redemption-rate feed for this ticker.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function PegGuide({ ticker }: { ticker: string }) {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">How to read this peg</p>
+        <CardTitle className="font-display text-lg font-normal">Cash vs wrappers vs venues</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+          {BoardView.pegGuide(ticker).map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      </CardContent>
     </Card>
   );
 }
@@ -453,25 +435,19 @@ function RouteTicket({ board }: { board: BoardPayload }) {
             ))}
           </div>
         ) : null}
-        <div className="space-y-3">
-          {BoardView.routeCards(board).map((card) => (
-            <RouteQuotes key={card.kind} card={card} />
-          ))}
-        </div>
-        {board.redemptionRate ? (
-          <p className="font-mono text-xs text-muted-foreground">
-            {board.redemptionRate.symbol}: {board.redemptionRate.value === null ? "—" : board.redemptionRate.value.toFixed(4)} ·{" "}
-            {board.redemptionRate.note}
-          </p>
+        {board.warnings.length > 0 ? (
+          <div className="space-y-1">
+            {board.warnings.map((warning) => (
+              <p key={warning} className="text-xs text-muted-foreground">
+                · {warning}
+              </p>
+            ))}
+          </div>
         ) : null}
       </CardContent>
-      {board.warnings.length > 0 ? (
+      {featured?.caveat ? (
         <CardFooter className="flex-col items-start gap-1">
-          {board.warnings.map((warning) => (
-            <p key={warning} className="text-xs text-muted-foreground">
-              · {warning}
-            </p>
-          ))}
+          <p className="text-xs text-muted-foreground">{featured.caveat}</p>
         </CardFooter>
       ) : null}
     </Card>

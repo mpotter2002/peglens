@@ -14,12 +14,17 @@ export function BoardSkeleton() {
           <Skeleton className="h-9 w-64" />
         </div>
       </header>
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
-        <Skeleton className="h-36 w-full rounded-xl" />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20.5rem)]">
+      <div className="mx-auto max-w-7xl space-y-5 px-4 py-5 sm:px-6">
+        <Skeleton className="h-14 w-full rounded-lg" />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,21rem)]">
           <div className="space-y-5">
-            <Skeleton className="h-24 w-72" />
-            <Skeleton className="h-44 w-full" />
+            <Skeleton className="h-28 w-72" />
+            <div className="grid gap-3 md:grid-cols-3">
+              <Skeleton className="h-44" />
+              <Skeleton className="h-44" />
+              <Skeleton className="h-44" />
+            </div>
+            <Skeleton className="h-48 w-full" />
           </div>
           <Skeleton className="h-80" />
         </div>

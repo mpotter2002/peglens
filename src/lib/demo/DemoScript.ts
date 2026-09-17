@@ -11,8 +11,8 @@ export class DemoScript {
     return [
       {
         n: "01",
-        title: "Land on AAPL",
-        lookFor: "Default ticker. No wallet, no fill.",
+        title: "Land on popular list",
+        lookFor: "Home is the ticker list. Desk is a drill-in. No wallet, no fill.",
       },
       {
         n: "02",

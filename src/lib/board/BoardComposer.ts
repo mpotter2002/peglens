@@ -14,6 +14,7 @@ import { TtlCache } from "@/lib/cache/TtlCache";
 import type {
   BoardMark,
   BoardPayload,
+  InventoryNameSource,
   PegVsEquity,
   PriceSource,
   SwapQuote,
@@ -218,6 +219,8 @@ export class BoardComposer {
       label,
       issuer,
       symbol: "—",
+      displaySymbol: null,
+      description: null,
       feedId: null,
       priceUsd: null,
       confidenceUsd: null,
@@ -243,13 +246,18 @@ export class BoardComposer {
       return this.missingMark(params.kind, params.label, params.issuer, "Pyth does not list this feed.");
     }
     const hermes = this.priceFor(params.feed, params.hermesPrices);
+    const identity = {
+      symbol: params.feed.symbol,
+      displaySymbol: params.feed.displaySymbol || null,
+      description: params.feed.description ? FeedResolver.prettyName(params.feed.description, params.feed.symbol) : null,
+      feedId: params.feed.id,
+    };
     if (hermes) {
       return {
         kind: params.kind,
         label: params.label,
         issuer: params.issuer,
-        symbol: params.feed.symbol,
-        feedId: params.feed.id,
+        ...identity,
         priceUsd: hermes.priceUsd,
         confidenceUsd: hermes.confidenceUsd,
         publishTime: hermes.publishTime,
@@ -264,8 +272,7 @@ export class BoardComposer {
         kind: params.kind,
         label: params.label,
         issuer: params.issuer,
-        symbol: params.feed.symbol,
-        feedId: params.feed.id,
+        ...identity,
         priceUsd: terminal.priceUsd,
         confidenceUsd: null,
         publishTime: null,
@@ -278,8 +285,7 @@ export class BoardComposer {
       kind: params.kind,
       label: params.label,
       issuer: params.issuer,
-      symbol: params.feed.symbol,
-      feedId: params.feed.id,
+      ...identity,
       priceUsd: null,
       confidenceUsd: null,
       publishTime: null,
@@ -319,8 +325,17 @@ export class BoardComposer {
     mint: Awaited<ReturnType<typeof MintResolver.xstock>>,
     inAtomic: string,
   ): Promise<WrapperRouteCard> {
+    const nameSource: InventoryNameSource = kind === "xstock" ? "xstocks" : "jupiter";
     if (!mint) {
-      return RouteBoard.card({ kind, label, mint: null, decimals: null, quotes: [] });
+      return RouteBoard.card({
+        kind,
+        label,
+        mint: null,
+        decimals: null,
+        name: null,
+        nameSource: null,
+        quotes: [],
+      });
     }
     try {
       const [raydium, jupiter, meteora] = await Promise.all([
@@ -333,10 +348,20 @@ export class BoardComposer {
         label,
         mint: mint.mint,
         decimals: mint.decimals,
+        name: mint.name,
+        nameSource,
         quotes: [raydium, jupiter, meteora],
       });
     } catch {
-      return RouteBoard.card({ kind, label, mint: mint.mint, decimals: mint.decimals, quotes: [] });
+      return RouteBoard.card({
+        kind,
+        label,
+        mint: mint.mint,
+        decimals: mint.decimals,
+        name: mint.name,
+        nameSource,
+        quotes: [],
+      });
     }
   }
 

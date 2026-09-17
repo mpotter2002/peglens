@@ -25,7 +25,7 @@ No API keys. Node 20+.
 npm install && npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). It lands on **AAPL**. Header chips: **Local / test** and **Not a broker**.
+Open [http://localhost:3000](http://localhost:3000). It lands on the **most popular** list. Open **AAPL** to drill into the desk. Header chips: **Local / test** and **Not a broker**.
 
 Optional API ping:
 
@@ -38,9 +38,9 @@ curl -s http://localhost:3000/api/board/AAPL | head
 
 ## 60-second smoke
 
-1. **AAPL cash hero** — ticker is the title; the large number is the broker/cash print. Caption is **Broker / cash**. Source chip reads **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
-2. **Comparison table** — three rows: **Broker / cash · xStock · Ondo**. Peg is in bps vs cash. `—` / **No print** / **No peg yet** means the venue missed, not a zero.
-3. **Route ticket** — right rail. **Cheapest honest route** only when venues compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** listed as alternatives. Caption includes **Quotes never execute**.
+1. **Home** — most popular tickers as the primary list. Search or tap to open a desk (`/?t=AAPL`).
+2. **AAPL cash hero** — ticker is the title; company label from Pyth (else catalog). The large number is the broker/cash print. Caption is **Broker / cash**. Three mark cards include peg, feed id, and mint when known.
+3. **Venue comparison** — on the desk plus the right-rail CTA. **Cheapest honest route** only when venues compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** listed as alternatives. Caption includes **Quotes never execute**.
 4. **Theme toggle** — header control cycles **System → Light → Dark**. Default is **light**.
 5. **ZZZZ empty** — type `ZZZZ` in ticker search (or open `/?t=ZZZZ`). **No live prints**. PegLens will not invent a price, peg, pool, or swap CTA.
 

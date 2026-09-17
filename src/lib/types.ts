@@ -20,11 +20,15 @@ export type RouteVenue = "raydium" | "jupiter" | "meteora" | "dflow";
 
 export type PegSign = "premium" | "discount" | "flat" | "unavailable";
 
+export type InventoryNameSource = "xstocks" | "jupiter";
+
 export type BoardMark = {
   kind: "equity" | WrapperKind;
   label: string;
   issuer: string;
   symbol: string;
+  displaySymbol: string | null;
+  description: string | null;
   feedId: string | null;
   priceUsd: number | null;
   confidenceUsd: number | null;
@@ -65,6 +69,8 @@ export type WrapperRouteCard = {
   label: string;
   mint: string | null;
   decimals: number | null;
+  name: string | null;
+  nameSource: InventoryNameSource | null;
   quotes: SwapQuote[];
   featured: SwapQuote | null;
   cheapest: SwapQuote | null;
