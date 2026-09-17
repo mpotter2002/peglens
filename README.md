@@ -4,6 +4,14 @@ Live **broker vs chain** board for tokenized stocks on Solana.
 
 Pick a ticker. Compare the US cash/equity mark to the xStock and Ondo wrappers. Read the premium or discount. Take the cheapest honest route — **Raydium first**, with Jupiter as a labeled secondary when Raydium has no pool.
 
+**Judges (one sitting):** [SUBMISSION.md](./SUBMISSION.md) · recording: [DEMO.md](./DEMO.md)
+
+| | |
+| --- | --- |
+| Local | `npm install && npm run dev` → [http://localhost:3000](http://localhost:3000) (lands on **AAPL**) |
+| **HOSTED_URL** | **TBD** — Vercel GitHub App is not installed on this repo yet ([install](https://github.com/apps/vercel)) |
+| Keys | None required |
+
 Hackathon: [Stocklana](https://hackathons.solana.com/hackathons/stocklana) · main track + Pyth bounty.
 
 ## How to test (60 seconds)
@@ -13,8 +21,7 @@ No API keys required. Empty cells are empty — PegLens does not invent prices o
 ### Local
 
 ```bash
-npm install
-npm run dev
+npm install && npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). It lands on **AAPL**.
@@ -30,11 +37,12 @@ curl -s http://localhost:3000/api/board/AAPL | head
 
 ### What you should see on AAPL
 
-1. Three marks: **Broker / cash · xStock · Ondo**. Source chip is **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
+1. **Cash hero** + comparison table: **Broker / cash · xStock · Ondo**. Source chip is **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
 2. Session badge. Outside 09:30–16:00 ET the cash column wears a **Last cash print** badge — wrappers keep quoting.
 3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero.
-4. **Cheapest honest route** is Raydium-first. For **AAPLx** that is usually Raydium (Jupiter often agrees by routing through Raydium CLMM). For **AAPLon**, Raydium currently has no pool — the board says so and shows Jupiter if it quotes.
-5. Switch ticker from the rail. CTAs open the venue. PegLens never signs or fills. The **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. Theme toggle (header) cycles System → Light → Dark; default is dark.
+4. **Raydium ticket** (right rail, **Cheapest honest route**). **AAPLx** is usually Raydium (Jupiter often agrees by routing through Raydium CLMM). **AAPLon**: Raydium currently has no pool — the board says so and shows Jupiter if it quotes. Caption: **Quotes never execute**.
+5. Header **theme toggle** cycles System → Light → Dark (default dark). **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. CTAs open the venue; PegLens never signs or fills.
+6. Type **ZZZZ** in the ticker field (or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
 
 If a mark or route is missing, that is the honest empty state. Try AAPL again, or set the optional Hermes key below.
 
@@ -50,7 +58,9 @@ Without a key, PegLens still uses:
 
 ### Hosted preview (no secrets)
 
-This repo deploys as a stock Next.js app. **Do not add env vars** for the first preview — the demo is designed to run without `PYTH_API_KEY`.
+**HOSTED_URL: TBD.** GitHub → Vercel is blocked until the [Vercel GitHub App](https://github.com/apps/vercel) is installed on this repo. Do not invent a live URL. Use local until then.
+
+Once the app is installed, this deploys as a stock Next.js app. **Do not add env vars** for the first preview — the demo is designed to run without `PYTH_API_KEY`.
 
 1. [Import the GitHub repo on Vercel](https://vercel.com/new/clone?repository-url=https://github.com/mpotter2002/peglens).
 2. Leave Environment Variables empty.
