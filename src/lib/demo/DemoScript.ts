@@ -32,7 +32,7 @@ export class DemoScript {
       {
         n: "05",
         title: "Switch ticker",
-        lookFor: "Rail or type a US symbol. Unknown names stay empty.",
+        lookFor: "Search or tap a popular ticker. Unknown names stay empty.",
       },
     ];
   }

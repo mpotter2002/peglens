@@ -42,7 +42,7 @@ curl -s http://localhost:3000/api/board/AAPL | head
 3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero.
 4. **Raydium ticket** (right rail, **Cheapest honest route**). **AAPLx** is usually Raydium (Jupiter often agrees by routing through Raydium CLMM). **AAPLon**: Raydium currently has no pool — the board says so and shows Jupiter if it quotes. Caption: **Quotes never execute**.
 5. Header **theme toggle** cycles System → Light → Dark (default dark). **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. CTAs open the venue; PegLens never signs or fills.
-6. Type **ZZZZ** in the ticker field (or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
+6. Type **ZZZZ** in ticker search (or tap a popular chip, or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
 
 If a mark or route is missing, that is the honest empty state. Try AAPL again, or set the optional Hermes key below.
 

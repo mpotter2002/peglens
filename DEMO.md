@@ -20,9 +20,9 @@ Desktop viewport (~1440×900). Start in **dark**. No wallet. No API key.
 | 2 | Hold on the comparison table | Broker / cash · xStock · Ondo. Peg in bps vs cash. After hours / overnight / weekend → **Last cash print** on cash. |
 | 3 | Pan to the right-rail ticket | **Cheapest honest route**. AAPLx Raydium quote + **Open Raydium swap**. AAPLon honesty line if Raydium has no pool. **Quotes never execute**. |
 | 4 | Click the header theme control twice | Dark → **System** → **Light**. Click once more to return to **Dark**. |
-| 5 | Type `ZZZZ` in **Any US ticker**, submit | **No live prints**. No invented price, peg, pool, or CTA. |
+| 5 | Type `ZZZZ` in ticker search, submit | **No live prints**. No invented price, peg, pool, or CTA. |
 
-Optional extra (if time): click **TSLA** on the rail, then back to **AAPL**, to show live marks on a second name.
+Optional extra (if time): tap **TSLA** in most popular, then back to **AAPL**, to show live marks on a second name.
 
 ## Do not record
 
