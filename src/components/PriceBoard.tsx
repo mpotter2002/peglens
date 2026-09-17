@@ -295,14 +295,12 @@ function MarkList({ board, className }: { board: BoardPayload; className?: strin
                 </span>
               )}
             </div>
-            <div className="mt-2 flex items-baseline justify-between gap-3">
-              <div>
-                <p className="price-xl font-mono text-2xl">{Format.compactUsd(column.mark.priceUsd)}</p>
-                <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
-                  {BoardView.printMeta(column.mark)}
-                </p>
-              </div>
-              <p className={cn("text-right font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
+            <div className="mt-2">
+              <p className="price-xl font-mono text-2xl">{Format.compactUsd(column.mark.priceUsd)}</p>
+              <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
+                {BoardView.printMeta(column.mark)}
+              </p>
+              <p className={cn("mt-2 font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
                 {BoardView.pegCopy(column.peg, true)}
               </p>
             </div>
@@ -400,7 +398,7 @@ function RouteTicket({ board }: { board: BoardPayload }) {
           </Empty>
         )}
         {cta && featured?.ctaUrl ? (
-          <Button asChild size="lg" className="w-full">
+          <Button asChild size="lg" className="w-full min-w-0 whitespace-normal">
             <a href={featured.ctaUrl} target="_blank" rel="noreferrer">
               {cta}
               <ArrowUpRight />
@@ -441,31 +439,16 @@ function RouteQuotes({ card }: { card: WrapperRouteCard }) {
       {card.quotes.length === 0 ? (
         <p className="mt-2 text-xs text-muted-foreground">{BoardView.emptyQuotes()}</p>
       ) : (
-        <Table className="mt-1">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="h-7 px-0 text-[10px] uppercase tracking-widest">Venue</TableHead>
-              <TableHead className="h-7 px-0 text-right text-[10px] uppercase tracking-widest">Quote</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {card.quotes.map((quote) => (
-              <TableRow key={quote.venue} className="hover:bg-transparent">
-                <TableCell className="px-0 font-mono text-[11px] uppercase tracking-widest whitespace-normal text-muted-foreground">
-                  {BoardView.venueLabel(quote.venue)}
-                </TableCell>
-                <TableCell
-                  className={cn(
-                    "px-0 text-right font-mono text-[11px] whitespace-normal",
-                    quote.available ? "text-foreground" : "text-premium",
-                  )}
-                >
-                  {BoardView.quoteLine(quote)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <ul className="mt-2 space-y-1.5">
+          {card.quotes.map((quote) => (
+            <li key={quote.venue} className="flex items-start justify-between gap-3 font-mono text-[11px]">
+              <span className="uppercase tracking-widest text-muted-foreground">{BoardView.venueLabel(quote.venue)}</span>
+              <span className={cn("max-w-[70%] text-right break-words", quote.available ? "text-foreground" : "text-premium")}>
+                {BoardView.quoteLine(quote)}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
