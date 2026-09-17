@@ -167,10 +167,10 @@
 }
 
 .desk-header.is-scrolled {
-  border-bottom-color: color-mix(in oklch, var(--foreground) 18%, transparent);
-  background-color: color-mix(in oklch, var(--background) 96%, transparent);
-  backdrop-filter: blur(18px) saturate(1.1);
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  border-bottom-color: color-mix(in oklch, var(--foreground) 14%, transparent);
+  background-color: color-mix(in oklch, var(--background) 98%, transparent);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
 }
 
 @media (prefers-reduced-motion: reduce) {
