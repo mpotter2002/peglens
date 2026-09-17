@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BoardComposer } from "@/lib/board/BoardComposer";
 import { BoardView } from "@/lib/ui/BoardView";
+import { RouteBoard } from "@/lib/routes/RouteBoard";
 import type { BoardMark, BoardPayload, PegVsEquity, SwapQuote } from "@/lib/types";
 
 describe("BoardView", () => {
@@ -46,6 +47,8 @@ describe("BoardView", () => {
     expect(BoardView.routeHeadline(board)).toMatch(/will not invent a pool/);
     expect(BoardView.ctaLabel(board)).toBeNull();
     expect(BoardView.emptyQuotes()).toMatch(/not a simulated fill/);
+    expect(BoardView.routeKicker(board)).toBe("No swap CTA");
+    expect(BoardView.routeStory(board)).toMatch(/will not invent a pool/);
   });
 
   it("captions the cash hero without inventing a print", () => {
@@ -73,6 +76,58 @@ describe("BoardView", () => {
     });
     expect(BoardView.quoteLine(live)).toBe("$334.44 · Raydium");
     expect(BoardView.quoteLine(miss)).toBe("Raydium has no route for this mint");
+  });
+
+  it("sorts live quotes cheapest-first and only badges a compared winner", () => {
+    const card = RouteBoard.card({
+      kind: "xstock",
+      label: "TSLAx",
+      mint: "mint",
+      decimals: 8,
+      quotes: [
+        quote({ venue: "raydium", available: true, effectiveUsdPerShare: 366.17, hopLabels: ["Raydium"] }),
+        quote({ venue: "meteora", available: true, effectiveUsdPerShare: 366.4, hopLabels: ["Meteora DLMM"] }),
+        quote({ venue: "jupiter", available: true, effectiveUsdPerShare: 365.51, hopLabels: ["Riptide"] }),
+      ],
+    });
+    expect(BoardView.sortedQuotes(card).map((row) => row.venue)).toEqual(["jupiter", "raydium", "meteora"]);
+    expect(BoardView.marksCheapest(card, card.quotes[2]!)).toBe(true);
+    expect(BoardView.marksCheapest(card, card.quotes[0]!)).toBe(false);
+  });
+
+  it("only labels the route cheapest when quotes actually compare", () => {
+    const cheapest = board({
+      cheapestHonest: {
+        wrapper: "xstock",
+        venue: "jupiter",
+        effectiveUsdPerShare: 365.51,
+        vsEquityBps: -5.7,
+        headline: "Buy TSLAx on Jupiter",
+        ctaLabel: "Open Jupiter swap",
+        ctaUrl: "https://jup.ag/swap/TSLA",
+        caveat: "Indicative quote",
+        claimCheapest: true,
+      },
+    });
+    const venueOnly = board({
+      cheapestHonest: {
+        wrapper: "xstock",
+        venue: "raydium",
+        effectiveUsdPerShare: 337.75,
+        vsEquityBps: 42,
+        headline: "Trade AAPLx on Raydium",
+        ctaLabel: "Open Raydium swap",
+        ctaUrl: "https://raydium.io/swap",
+        caveat: "Not a cheapest claim",
+        claimCheapest: false,
+      },
+    });
+    expect(BoardView.routeKicker(cheapest)).toBe("Cheapest honest route");
+    expect(BoardView.routeHeadline(cheapest)).toBe("Buy TSLAx on Jupiter");
+    expect(BoardView.routeStory(cheapest)).toMatch(/Cheapest is first/i);
+    expect(BoardView.ctaLabel(cheapest)).toBe("Open Jupiter swap");
+    expect(BoardView.routeKicker(venueOnly)).toBe("Trade on Raydium");
+    expect(BoardView.routeStory(venueOnly)).toMatch(/not a cheapest claim/i);
   });
 });
 

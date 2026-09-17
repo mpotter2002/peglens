@@ -19,11 +19,13 @@ export class JupiterRouter {
     outputMint: string;
     outDecimals: number;
     inAtomic: string;
+    dexes?: string[];
   }): Promise<SwapQuote> {
     const inputMint = MintResolver.USDC;
     const url =
       `https://lite-api.jup.ag/swap/v1/quote?inputMint=${inputMint}` +
-      `&outputMint=${params.outputMint}&amount=${params.inAtomic}&slippageBps=50`;
+      `&outputMint=${params.outputMint}&amount=${params.inAtomic}&slippageBps=50` +
+      (params.dexes?.length ? `&dexes=${encodeURIComponent(params.dexes.join(","))}` : "");
     const { ok, status, text } = await HttpJson.get(url);
     const body = HttpJson.parse<JupiterQuote>(text);
     const hops = (body?.routePlan ?? [])

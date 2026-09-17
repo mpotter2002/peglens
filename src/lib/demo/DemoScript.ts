@@ -27,12 +27,12 @@ export class DemoScript {
       {
         n: "04",
         title: "Cheapest honest route",
-        lookFor: "AAPLx is Raydium-first. AAPLon says so if Raydium has no pool.",
+        lookFor: "Cheapest venue is the primary CTA. Raydium, Jupiter, and Meteora are listed. AAPLon says so if Raydium has no pool.",
       },
       {
         n: "05",
         title: "Switch ticker",
-        lookFor: "Rail or type a US symbol. Unknown names stay empty.",
+        lookFor: "Search or tap a popular ticker. Unknown names stay empty.",
       },
     ];
   }

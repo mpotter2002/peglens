@@ -33,7 +33,7 @@ export function useTheme(): ThemeContextValue {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [choice, setChoiceState] = useState<ThemeChoice>(ThemePreference.DEFAULT);
-  const [resolved, setResolved] = useState<ResolvedTheme>("dark");
+  const [resolved, setResolved] = useState<ResolvedTheme>("light");
 
   const apply = useCallback((next: ThemeChoice) => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

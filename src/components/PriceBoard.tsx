@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Search } from "lucide-react";
 import { BoardSkeleton } from "@/components/BoardSkeleton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -15,7 +15,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
 import { DemoScript } from "@/lib/demo/DemoScript";
@@ -109,26 +108,28 @@ export function PriceBoard({ ticker }: { ticker: string }) {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen">
       <DeskChrome board={board} />
-      <div className="mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-6 sm:px-6 lg:grid-cols-[11.5rem_minmax(0,1fr)_minmax(18rem,20.5rem)]">
-        <TickerRail active={active} onSelect={selectTicker} />
-        <main className={cn("min-w-0", pending && "opacity-60 transition-opacity")}>
-          <QuoteHero board={board} />
-          {BoardView.noLivePrints(board) ? (
-            <Alert className="mt-5">
-              <AlertTitle>{BoardView.emptyTitle()}</AlertTitle>
-              <AlertDescription>{BoardView.emptyBody(board.ticker)}</AlertDescription>
-            </Alert>
-          ) : null}
-          <MarkList board={board} className="mt-6 md:hidden" />
-          <MarkTable board={board} className="mt-6 hidden md:block" />
-          {error ? <p className="mt-3 font-mono text-xs text-premium">{error}</p> : null}
-        </main>
-        <RouteTicket board={board} />
+      <div className="mx-auto max-w-7xl space-y-6 overflow-x-hidden px-4 py-6 sm:px-6">
+        <TickerDesk active={active} onSelect={selectTicker} sessionDetail={board.session.detail} />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20.5rem)]">
+          <main className={cn("min-w-0", pending && "opacity-60 transition-opacity")}>
+            <QuoteHero board={board} />
+            {BoardView.noLivePrints(board) ? (
+              <Alert className="mt-5">
+                <AlertTitle>{BoardView.emptyTitle()}</AlertTitle>
+                <AlertDescription>{BoardView.emptyBody(board.ticker)}</AlertDescription>
+              </Alert>
+            ) : null}
+            <MarkList board={board} className="mt-6 md:hidden" />
+            <MarkTable board={board} className="mt-6 hidden md:block" />
+            {error ? <p className="mt-3 font-mono text-xs text-premium">{error}</p> : null}
+          </main>
+          <RouteTicket board={board} />
+        </div>
       </div>
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
-        <p>PegLens · Stocklana · Pyth marks · Raydium-first routes · no custody, no fills.</p>
+        <p>PegLens · Stocklana · Pyth marks · honest DEX quotes · no custody, no fills.</p>
         <p className="flex gap-3">
           <a className="underline decoration-border underline-offset-4" href="https://prestocks.com/products" target="_blank" rel="noreferrer">
             PreStocks
@@ -143,20 +144,40 @@ export function PriceBoard({ ticker }: { ticker: string }) {
   );
 }
 
+function useScrolled(threshold = 0): boolean {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const update = () => {
+      const next = window.scrollY > threshold;
+      setScrolled((prev) => (prev === next ? prev : next));
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [threshold]);
+  return scrolled;
+}
+
 function DeskChrome({ board }: { board: BoardPayload }) {
+  const scrolled = useScrolled();
   const closed = board.session.afterHoursNarrative;
   return (
-    <header className="border-b border-border/80">
+    <header
+      className={cn(
+        "desk-header sticky top-0 z-40 w-full",
+        scrolled && "is-scrolled",
+      )}
+    >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-baseline gap-3">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Tokenized equity desk
             </p>
-            <h1 className="font-display text-2xl leading-none tracking-tight">PegLens</h1>
+            <h1 className="font-display text-3xl leading-none tracking-tight sm:text-4xl">PegLens</h1>
           </div>
           <p className="hidden max-w-sm text-sm text-muted-foreground md:block">
-            Broker mark vs chain wrappers. Premium, discount, cheapest honest route.
+            Broker mark vs chain wrappers. Premium, discount, honest venue CTA.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -177,28 +198,59 @@ function DeskChrome({ board }: { board: BoardPayload }) {
           <ThemeToggle />
         </div>
       </div>
-      <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-6">
-        <ol className="flex gap-2 overflow-x-auto text-[11px] text-muted-foreground">
-          {DemoScript.steps().map((step) => (
-            <li key={step.n} className="flex shrink-0 items-baseline gap-1.5 rounded-md bg-muted/60 px-2 py-1">
-              <span className="font-mono text-[10px] text-session">{step.n}</span>
-              <span className="text-foreground">{step.title}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-1 hidden text-[11px] text-muted-foreground lg:block">{board.session.detail}</p>
-      </div>
     </header>
   );
 }
 
-function TickerRail({ active, onSelect }: { active: string; onSelect: (ticker: string) => void }) {
+function TickerDesk({
+  active,
+  onSelect,
+  sessionDetail,
+}: {
+  active: string;
+  onSelect: (ticker: string) => void;
+  sessionDetail: string;
+}) {
   const [draft, setDraft] = useState(active);
   useEffect(() => setDraft(active), [active]);
   return (
-    <aside className="h-fit rounded-xl bg-card p-3 ring-1 ring-foreground/10">
-      <p className="px-1 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Ticker</p>
-      <nav className="mt-2 flex gap-1 overflow-x-auto lg:flex-col">
+    <section className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+      <ol className="flex gap-2 overflow-x-auto text-[11px] text-muted-foreground">
+        {DemoScript.steps().map((step) => (
+          <li key={step.n} className="flex shrink-0 items-baseline gap-1.5 rounded-md bg-muted/60 px-2 py-1">
+            <span className="font-mono text-[10px] text-session">{step.n}</span>
+            <span className="text-foreground">{step.title}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-1 hidden text-[11px] text-muted-foreground lg:block">{sessionDetail}</p>
+      <form
+        className="mt-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSelect(draft);
+        }}
+      >
+        <label
+          className="px-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
+          htmlFor="ticker-input"
+        >
+          Search any US ticker
+        </label>
+        <div className="relative mt-1">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            id="ticker-input"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value.toUpperCase())}
+            maxLength={6}
+            placeholder="AAPL"
+            className="h-10 pl-8 font-mono"
+          />
+        </div>
+      </form>
+      <p className="mt-4 px-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Most popular</p>
+      <nav className="mt-2 flex flex-nowrap gap-1 overflow-x-auto pb-0.5" aria-label="Most popular tickets">
         {TickerUniverse.list().map((ticker) => {
           const selected = ticker === active;
           return (
@@ -207,10 +259,10 @@ function TickerRail({ active, onSelect }: { active: string; onSelect: (ticker: s
               type="button"
               onClick={() => onSelect(ticker)}
               className={cn(
-                "rounded-md px-2.5 py-1.5 text-left font-mono text-sm transition-colors",
+                "shrink-0 rounded-md px-2.5 py-1.5 font-mono text-sm transition-colors",
                 selected
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
               aria-current={selected ? "page" : undefined}
             >
@@ -219,25 +271,7 @@ function TickerRail({ active, onSelect }: { active: string; onSelect: (ticker: s
           );
         })}
       </nav>
-      <Separator className="my-3" />
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSelect(draft);
-        }}
-      >
-        <label className="px-1 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground" htmlFor="ticker-input">
-          Any US ticker
-        </label>
-        <Input
-          id="ticker-input"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value.toUpperCase())}
-          maxLength={6}
-          className="mt-1 font-mono"
-        />
-      </form>
-    </aside>
+    </section>
   );
 }
 
@@ -377,14 +411,15 @@ function pegClass(tone: PegTone): string {
 function RouteTicket({ board }: { board: BoardPayload }) {
   const featured = board.cheapestHonest;
   const cta = BoardView.ctaLabel(board);
+  const alternatives = BoardView.alternativeQuotes(board);
   return (
-    <Card className="h-fit min-w-0 overflow-hidden lg:sticky lg:top-4">
+    <Card className="h-fit min-w-0 overflow-hidden lg:sticky lg:top-24">
       <CardHeader>
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-session">Cheapest honest route</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-session">{BoardView.routeKicker(board)}</p>
         <CardTitle className="font-display text-2xl font-normal leading-tight break-words">
           {BoardView.routeHeadline(board)}
         </CardTitle>
-        <CardDescription className="break-words text-pretty hyphens-auto">{BoardView.routeStory()}</CardDescription>
+        <CardDescription className="break-words text-pretty hyphens-auto">{BoardView.routeStory(board)}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {featured ? (
@@ -404,6 +439,19 @@ function RouteTicket({ board }: { board: BoardPayload }) {
               <ArrowUpRight className="size-4 shrink-0" />
             </a>
           </Button>
+        ) : null}
+        {alternatives.length > 0 ? (
+          <div className="space-y-1.5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Other buy sources</p>
+            {alternatives.map((quote) => (
+              <Button key={quote.venue} asChild variant="outline" size="sm" className="h-auto w-full min-w-0 justify-between whitespace-normal py-2">
+                <a href={quote.url ?? undefined} target="_blank" rel="noreferrer">
+                  <span>Open {BoardView.venueLabel(quote.venue)}</span>
+                  <span className="font-mono">{Format.usd(quote.effectiveUsdPerShare, 2)}</span>
+                </a>
+              </Button>
+            ))}
+          </div>
         ) : null}
         <div className="space-y-3">
           {BoardView.routeCards(board).map((card) => (
@@ -440,14 +488,26 @@ function RouteQuotes({ card }: { card: WrapperRouteCard }) {
         <p className="mt-2 text-xs text-muted-foreground">{BoardView.emptyQuotes()}</p>
       ) : (
         <ul className="mt-2 space-y-1.5">
-          {card.quotes.map((quote) => (
-            <li key={quote.venue} className="flex items-start justify-between gap-3 font-mono text-[11px]">
-              <span className="uppercase tracking-widest text-muted-foreground">{BoardView.venueLabel(quote.venue)}</span>
-              <span className={cn("max-w-[70%] text-right break-words", quote.available ? "text-foreground" : "text-premium")}>
-                {BoardView.quoteLine(quote)}
-              </span>
-            </li>
-          ))}
+          {BoardView.sortedQuotes(card).map((quote) => {
+            const winning = BoardView.marksCheapest(card, quote);
+            return (
+              <li
+                key={quote.venue}
+                className={cn(
+                  "flex items-start justify-between gap-3 rounded-md px-1.5 py-1 font-mono text-[11px]",
+                  winning && "bg-session/10",
+                )}
+              >
+                <span className="flex min-w-0 items-baseline gap-1.5 uppercase tracking-widest text-muted-foreground">
+                  <span>{BoardView.venueLabel(quote.venue)}</span>
+                  {winning ? <span className="normal-case tracking-normal text-session">Cheapest</span> : null}
+                </span>
+                <span className={cn("max-w-[70%] text-right break-words", quote.available ? "text-foreground" : "text-premium")}>
+                  {BoardView.quoteLine(quote)}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
