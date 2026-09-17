@@ -121,7 +121,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
               <AlertDescription>{BoardView.emptyBody(board.ticker)}</AlertDescription>
             </Alert>
           ) : null}
-          <MarkGrid board={board} />
+          <MarkTable board={board} />
           {error ? <p className="mt-3 font-mono text-xs text-premium">{error}</p> : null}
         </main>
         <RouteTicket board={board} />
@@ -268,61 +268,55 @@ function QuoteHero({ board }: { board: BoardPayload }) {
   );
 }
 
-function MarkGrid({ board }: { board: BoardPayload }) {
+function MarkTable({ board }: { board: BoardPayload }) {
   const sessionClosed = !board.session.cashOpen;
   return (
-    <div className="mt-6 grid gap-3 md:grid-cols-3">
-      {BoardView.columns(board).map((column) => (
-        <MarkCard
-          key={column.mark.kind}
-          mark={column.mark}
-          peg={column.peg}
-          reference={column.reference}
-          sessionClosed={sessionClosed}
-        />
-      ))}
-    </div>
-  );
-}
-
-function MarkCard({
-  mark,
-  peg,
-  reference,
-  sessionClosed,
-}: {
-  mark: ReturnType<typeof BoardView.columns>[number]["mark"];
-  peg: ReturnType<typeof BoardView.columns>[number]["peg"];
-  reference: boolean;
-  sessionClosed: boolean;
-}) {
-  const empty = mark.priceUsd === null;
-  const lastPrint = BoardView.lastCashPrint(mark, sessionClosed);
-  return (
-    <Card size="sm" className={reference ? "ring-foreground/16" : undefined}>
-      <CardHeader className="gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-session">{mark.label}</p>
-            <CardDescription>{mark.issuer}</CardDescription>
-          </div>
-          {lastPrint ? (
-            <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
-          ) : (
-            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              {BoardView.sourceOrSession(mark, sessionClosed)}
-            </span>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="price-xl font-mono text-3xl">{Format.compactUsd(mark.priceUsd)}</p>
-        <p className={cn("mt-1 font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
-          {empty ? "No print" : BoardView.printAge(mark)}
-        </p>
-        <p className={cn("mt-3 font-mono text-sm", pegClass(BoardView.pegTone(peg)))}>{BoardView.pegCopy(peg)}</p>
-        {mark.note ? <p className="mt-3 text-xs leading-snug text-muted-foreground">{mark.note}</p> : null}
-      </CardContent>
+    <Card className="mt-6 overflow-hidden py-0">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="text-[10px] uppercase tracking-widest">Venue</TableHead>
+            <TableHead className="text-right text-[10px] uppercase tracking-widest">Print</TableHead>
+            <TableHead className="text-right text-[10px] uppercase tracking-widest">Vs cash</TableHead>
+            <TableHead className="text-right text-[10px] uppercase tracking-widest">Source</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {BoardView.columns(board).map((column) => {
+            const empty = column.mark.priceUsd === null;
+            const lastPrint = BoardView.lastCashPrint(column.mark, sessionClosed);
+            return (
+              <TableRow key={column.mark.kind} className={column.reference ? "bg-muted/40" : undefined}>
+                <TableCell>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-session">{column.mark.label}</p>
+                  <p className="text-xs text-muted-foreground">{column.mark.issuer}</p>
+                  {column.mark.note ? (
+                    <p className="mt-1 max-w-xs text-[11px] leading-snug text-muted-foreground">{column.mark.note}</p>
+                  ) : null}
+                </TableCell>
+                <TableCell className="text-right">
+                  <p className="price-xl font-mono text-xl">{Format.compactUsd(column.mark.priceUsd)}</p>
+                  <p className={cn("font-mono text-[11px]", empty ? "uppercase tracking-widest text-premium" : "text-muted-foreground")}>
+                    {empty ? "No print" : BoardView.printAge(column.mark)}
+                  </p>
+                </TableCell>
+                <TableCell className={cn("text-right font-mono text-sm", pegClass(BoardView.pegTone(column.peg)))}>
+                  {BoardView.pegCopy(column.peg)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {lastPrint ? (
+                    <Badge className="bg-session/15 text-session hover:bg-session/15">Last cash print</Badge>
+                  ) : (
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {BoardView.sourceOrSession(column.mark, sessionClosed)}
+                    </span>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </Card>
   );
 }

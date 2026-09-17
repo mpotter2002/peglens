@@ -18,11 +18,7 @@ export function BoardSkeleton() {
         <Skeleton className="h-80" />
         <div className="space-y-5">
           <Skeleton className="h-24 w-72" />
-          <div className="grid gap-3 md:grid-cols-3">
-            <Skeleton className="h-36" />
-            <Skeleton className="h-36" />
-            <Skeleton className="h-36" />
-          </div>
+          <Skeleton className="h-44 w-full" />
         </div>
         <Skeleton className="h-80" />
       </div>
