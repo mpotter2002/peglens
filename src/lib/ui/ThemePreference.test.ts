@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { ThemePreference } from "@/lib/ui/ThemePreference";
 
 describe("ThemePreference", () => {
-  it("parses known choices and falls back to dark", () => {
+  it("parses known choices and falls back to light", () => {
     expect(ThemePreference.parse("light")).toBe("light");
     expect(ThemePreference.parse("system")).toBe("system");
     expect(ThemePreference.parse("dark")).toBe("dark");
-    expect(ThemePreference.parse("nope")).toBe("dark");
-    expect(ThemePreference.parse(null)).toBe("dark");
+    expect(ThemePreference.parse("nope")).toBe("light");
+    expect(ThemePreference.parse(null)).toBe("light");
+    expect(ThemePreference.DEFAULT).toBe("light");
   });
 
   it("cycles System → Light → Dark → System", () => {
@@ -42,6 +43,6 @@ describe("ThemePreference", () => {
 
   it("embeds the peglens storage key in the blocking script", () => {
     expect(ThemePreference.blockingScript()).toContain("peglens.theme");
-    expect(ThemePreference.blockingScript()).toContain('"dark"');
+    expect(ThemePreference.blockingScript()).toContain('"light"');
   });
 });

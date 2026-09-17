@@ -11,8 +11,9 @@ export class RouteBoard {
     const live = params.quotes.filter((quote) => quote.available && quote.effectiveUsdPerShare);
     const cheapest = live.slice().sort((a, b) => (a.effectiveUsdPerShare ?? Infinity) - (b.effectiveUsdPerShare ?? Infinity))[0] ?? null;
     const raydium = live.find((quote) => quote.venue === "raydium") ?? null;
-    const featured = raydium ?? cheapest;
-    const raydiumIsCheapest = raydium && cheapest ? raydium.venue === cheapest.venue || this.withinBps(raydium, cheapest, 1) : raydium ? true : null;
+    const raydiumIsCheapest =
+      raydium && cheapest ? raydium.venue === cheapest.venue || this.withinBps(raydium, cheapest, 1) : null;
+    const featured = raydiumIsCheapest && raydium ? raydium : cheapest;
     return {
       kind: params.kind,
       label: params.label,
@@ -51,7 +52,10 @@ export class RouteBoard {
       return raydiumMiss?.reason || "No executable route from Raydium or Jupiter for this size.";
     }
     if (params.raydium && params.cheapest && params.cheapest.venue === "raydium") {
-      if (jupiter && this.jupiterIsRaydium(jupiter)) {
+      if (!jupiter) {
+        return "Raydium quoted this size. PegLens did not get a second venue to compare — not a cheapest claim.";
+      }
+      if (this.jupiterIsRaydium(jupiter)) {
         return "Raydium is the cheapest venue. Jupiter’s quote is the same Raydium CLMM hop.";
       }
       return "Raydium is the cheapest executable venue at this size.";

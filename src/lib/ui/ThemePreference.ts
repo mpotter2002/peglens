@@ -15,7 +15,7 @@ export interface ThemeRoot {
 
 export class ThemePreference {
   static readonly STORAGE_KEY = "peglens.theme";
-  static readonly DEFAULT: ThemeChoice = "dark";
+  static readonly DEFAULT: ThemeChoice = "light";
 
   static parse(value: string | null | undefined): ThemeChoice {
     return value === "light" || value === "dark" || value === "system"

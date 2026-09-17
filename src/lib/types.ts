@@ -110,6 +110,7 @@ export type BoardPayload = {
     ctaLabel: string;
     ctaUrl: string | null;
     caveat: string;
+    claimCheapest: boolean;
   } | null;
   warnings: string[];
 };

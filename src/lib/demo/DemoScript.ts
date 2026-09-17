@@ -27,7 +27,7 @@ export class DemoScript {
       {
         n: "04",
         title: "Cheapest honest route",
-        lookFor: "AAPLx is Raydium-first. AAPLon says so if Raydium has no pool.",
+        lookFor: "CTA follows the cheapest quoted venue. AAPLon says so if Raydium has no pool.",
       },
       {
         n: "05",

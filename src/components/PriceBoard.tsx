@@ -129,7 +129,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
         </div>
       </div>
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
-        <p>PegLens · Stocklana · Pyth marks · Raydium-first routes · no custody, no fills.</p>
+        <p>PegLens · Stocklana · Pyth marks · honest DEX quotes · no custody, no fills.</p>
         <p className="flex gap-3">
           <a className="underline decoration-border underline-offset-4" href="https://prestocks.com/products" target="_blank" rel="noreferrer">
             PreStocks
@@ -177,7 +177,7 @@ function DeskChrome({ board }: { board: BoardPayload }) {
             <h1 className="font-display text-3xl leading-none tracking-tight sm:text-4xl">PegLens</h1>
           </div>
           <p className="hidden max-w-sm text-sm text-muted-foreground md:block">
-            Broker mark vs chain wrappers. Premium, discount, cheapest honest route.
+            Broker mark vs chain wrappers. Premium, discount, honest venue CTA.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -414,11 +414,11 @@ function RouteTicket({ board }: { board: BoardPayload }) {
   return (
     <Card className="h-fit min-w-0 overflow-hidden lg:sticky lg:top-24">
       <CardHeader>
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-session">Cheapest honest route</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-session">{BoardView.routeKicker(board)}</p>
         <CardTitle className="font-display text-2xl font-normal leading-tight break-words">
           {BoardView.routeHeadline(board)}
         </CardTitle>
-        <CardDescription className="break-words text-pretty hyphens-auto">{BoardView.routeStory()}</CardDescription>
+        <CardDescription className="break-words text-pretty hyphens-auto">{BoardView.routeStory(board)}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {featured ? (

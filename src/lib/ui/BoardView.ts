@@ -123,8 +123,30 @@ export class BoardView {
     return board.cheapestHonest?.headline ?? "No executable route right now — PegLens will not invent a pool";
   }
 
-  static routeStory(): string {
-    return "Raydium is the default story because it still dominates Solana xStocks volume. If it has no pool, PegLens says so and shows the next real quote.";
+  static routeKicker(board: BoardPayload): string {
+    if (!board.cheapestHonest) {
+      return "No swap CTA";
+    }
+    if (board.cheapestHonest.claimCheapest) {
+      return "Cheapest honest route";
+    }
+    const venue = board.cheapestHonest.venue;
+    const venueName = venue === "raydium" ? "Raydium" : venue === "jupiter" ? "Jupiter" : "dFlow";
+    return `Trade on ${venueName}`;
+  }
+
+  static routeStory(board: BoardPayload): string {
+    const featured = board.cheapestHonest;
+    if (!featured) {
+      return "PegLens will not invent a pool or a fill. Empty route cells stay empty.";
+    }
+    if (!featured.claimCheapest) {
+      return "This is a venue quote, not a cheapest claim. PegLens only heard one executable venue at this size.";
+    }
+    if (featured.venue === "raydium") {
+      return "Raydium quoted the lowest executable USD/share at this size. Other venues stay listed so you can compare.";
+    }
+    return "This CTA follows the lowest quoted USD/share. Raydium is listed when it has a pool — PegLens will not hide it.";
   }
 
   static ctaLabel(board: BoardPayload): string | null {

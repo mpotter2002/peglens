@@ -30,7 +30,7 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "PegLens — broker vs chain",
   description:
-    "Live premium/discount board for tokenized stocks. Equity vs xStock vs Ondo, with a Raydium-first cheapest route.",
+    "Live premium/discount board for tokenized stocks. Equity vs xStock vs Ondo, with an honest cheapest-venue CTA when quotes compare.",
   icons: { icon: "/favicon.svg" },
 };
 
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={cn("dark", display.variable, sans.variable, mono.variable, sans.className)}
+      className={cn(display.variable, sans.variable, mono.variable, sans.className)}
       suppressHydrationWarning
     >
       <head>

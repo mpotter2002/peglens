@@ -34,7 +34,47 @@ describe("RouteBoard", () => {
       ],
     });
     expect(card.featured?.venue).toBe("raydium");
+    expect(card.cheapest?.venue).toBe("raydium");
     expect(card.honesty).toMatch(/same Raydium/i);
+  });
+
+  it("features Jupiter when it is cheaper and does not pretend Raydium won", () => {
+    const card = RouteBoard.card({
+      kind: "xstock",
+      label: "TSLAx",
+      mint: "mint",
+      decimals: 8,
+      quotes: [
+        quote({ venue: "raydium", available: true, effectiveUsdPerShare: 366.17, hopLabels: ["Raydium"], url: "https://raydium.io/tsla" }),
+        quote({ venue: "jupiter", available: true, effectiveUsdPerShare: 365.69, hopLabels: ["Meteora DLMM"], url: "https://jup.ag/tsla" }),
+      ],
+    });
+    expect(card.featured?.venue).toBe("jupiter");
+    expect(card.cheapest?.venue).toBe("jupiter");
+    expect(card.featured?.url).toBe("https://jup.ag/tsla");
+    expect(card.raydiumIsCheapest).toBe(false);
+    expect(card.honesty).toMatch(/Jupiter is cheaper/i);
+  });
+
+  it("does not call a lone Raydium quote the cheapest venue", () => {
+    const card = RouteBoard.card({
+      kind: "xstock",
+      label: "AAPLx",
+      mint: "mint",
+      decimals: 8,
+      quotes: [
+        quote({ venue: "raydium", available: true, effectiveUsdPerShare: 333.71, hopLabels: ["Raydium"] }),
+        quote({
+          venue: "jupiter",
+          available: false,
+          effectiveUsdPerShare: null,
+          reason: "Jupiter quote timed out",
+          hopLabels: [],
+        }),
+      ],
+    });
+    expect(card.featured?.venue).toBe("raydium");
+    expect(card.honesty).toMatch(/not a cheapest claim/i);
   });
 
   it("says so when Raydium has no pool", () => {

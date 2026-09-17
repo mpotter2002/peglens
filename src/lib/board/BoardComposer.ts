@@ -123,7 +123,7 @@ export class BoardComposer {
       redemptionRate: feeds.redemptionRate,
       quoteSizeUsd: QUOTE_USD,
       routes,
-      cheapestHonest: this.cheapestHonest(routes, equity.priceUsd),
+      cheapestHonest: this.honestRoute(routes, equity.priceUsd),
       warnings,
     };
   }
@@ -338,44 +338,55 @@ export class BoardComposer {
     }
   }
 
-  private static cheapestHonest(
+  static honestRoute(
     routes: WrapperRouteCard[],
     equityUsd: number | null,
   ): BoardPayload["cheapestHonest"] {
     const candidates = routes
-      .map((card) => ({ card, quote: card.featured }))
-      .filter((row): row is { card: WrapperRouteCard; quote: SwapQuote } => Boolean(row.quote?.available && row.quote.effectiveUsdPerShare));
+      .map((card) => ({ card, quote: card.cheapest }))
+      .filter((row): row is { card: WrapperRouteCard; quote: SwapQuote } =>
+        Boolean(row.quote?.available && row.quote.effectiveUsdPerShare),
+      );
     if (candidates.length === 0) {
       return null;
     }
-    const raydiumFirst = [...candidates].sort((a, b) => {
-      const aRay = a.quote.venue === "raydium" ? 0 : 1;
-      const bRay = b.quote.venue === "raydium" ? 0 : 1;
-      if (aRay !== bRay) {
-        return aRay - bRay;
+    const bestPrice = Math.min(...candidates.map((row) => row.quote.effectiveUsdPerShare ?? Infinity));
+    const winners = candidates.filter((row) => {
+      const price = row.quote.effectiveUsdPerShare;
+      if (!price || !Number.isFinite(bestPrice)) {
+        return false;
       }
-      return (a.quote.effectiveUsdPerShare ?? Infinity) - (b.quote.effectiveUsdPerShare ?? Infinity);
-    })[0];
+      return ((price - bestPrice) / bestPrice) * 10_000 <= 1;
+    });
+    const picked = winners.find((row) => row.quote.venue === "raydium") ?? winners[0];
+    if (!picked) {
+      return null;
+    }
+    const liveQuotes = routes.flatMap((card) =>
+      card.quotes.filter((quote) => quote.available && quote.effectiveUsdPerShare),
+    );
+    const claimCheapest = liveQuotes.length >= 2;
     const vsEquityBps =
-      equityUsd && raydiumFirst.quote.effectiveUsdPerShare
-        ? PegMath.premiumBps(raydiumFirst.quote.effectiveUsdPerShare, equityUsd)
+      equityUsd && picked.quote.effectiveUsdPerShare
+        ? PegMath.premiumBps(picked.quote.effectiveUsdPerShare, equityUsd)
         : null;
-    const venue = raydiumFirst.quote.venue;
-    const wrapper = raydiumFirst.card.kind;
-    const label = raydiumFirst.card.label;
-    const headline =
-      venue === "raydium"
-        ? `Buy ${label} on Raydium`
-        : `Raydium has no pool for ${label} · ${venue} is the honest fallback`;
+    const venue = picked.quote.venue;
+    const label = picked.card.label;
+    const venueName = venue === "raydium" ? "Raydium" : venue === "jupiter" ? "Jupiter" : "dFlow";
+    const headline = claimCheapest ? `Buy ${label} on ${venueName}` : `Trade ${label} on ${venueName}`;
+    const caveat = claimCheapest
+      ? "Indicative quote for $100 USDC in, 50 bps slippage. PegLens never fills or signs."
+      : `Indicative ${venueName} quote for $100 USDC in, 50 bps slippage. Not a cheapest claim — PegLens only heard one venue. Never fills or signs.`;
     return {
-      wrapper,
+      wrapper: picked.card.kind,
       venue,
-      effectiveUsdPerShare: raydiumFirst.quote.effectiveUsdPerShare ?? 0,
+      effectiveUsdPerShare: picked.quote.effectiveUsdPerShare ?? 0,
       vsEquityBps,
       headline,
-      ctaLabel: venue === "raydium" ? "Open Raydium swap" : `Open ${venue} quote`,
-      ctaUrl: raydiumFirst.quote.url,
-      caveat: "Indicative quote for $100 USDC in, 50 bps slippage. PegLens never fills or signs.",
+      ctaLabel: `Open ${venueName} swap`,
+      ctaUrl: picked.quote.url,
+      caveat,
+      claimCheapest,
     };
   }
 }
