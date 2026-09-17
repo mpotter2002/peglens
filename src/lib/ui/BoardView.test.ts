@@ -129,6 +129,72 @@ describe("BoardView", () => {
     expect(BoardView.routeKicker(venueOnly)).toBe("Trade on Raydium");
     expect(BoardView.routeStory(venueOnly)).toMatch(/not a cheapest claim/i);
   });
+
+  it("labels the company from Pyth name, then the demo catalog, never a fake print", () => {
+    expect(BoardView.companyLabel(board({ ticker: "AAPL", name: "APPLE INC" }))).toBe("APPLE INC");
+    expect(BoardView.companyLabel(board({ ticker: "AAPL", name: "AAPL" }))).toBe("Apple");
+    expect(BoardView.companyLabel(board({ ticker: "ZZZZ", name: "ZZZZ" }))).toBe("ZZZZ");
+  });
+
+  it("keeps last-cash-print context honest when the session is shut", () => {
+    const printed = board({
+      session: { ...BoardComposer.unavailable("AAPL").session, cashOpen: false, afterHoursNarrative: true },
+      equity: mark({ kind: "equity", priceUsd: 190.12 }),
+    });
+    const empty = board({
+      session: { ...BoardComposer.unavailable("AAPL").session, cashOpen: false, afterHoursNarrative: true },
+      equity: mark({ kind: "equity", priceUsd: null }),
+    });
+    expect(BoardView.cashPrintContext(printed)).toMatch(/last print/i);
+    expect(BoardView.cashPrintContext(empty)).toMatch(/will not invent/);
+  });
+
+  it("surfaces feed metadata without inventing a tick", () => {
+    const live = mark({
+      kind: "equity",
+      feedId: "abcdef0123456789deadbeef",
+      publishTime: 1_700_000_000,
+      confidenceUsd: 0.04,
+      source: "hermes",
+    });
+    const missing = mark({ kind: "xstock", feedId: null, symbol: "—" });
+    expect(BoardView.markFeedLine(live)).toMatch(/0xabcdef01/);
+    expect(BoardView.markFeedLine(live)).toMatch(/conf/);
+    expect(BoardView.markFeedLine(missing)).toBe("No Pyth feed id");
+    expect(BoardView.markSymbolLine(live)).toMatch(/AAPL\/USD/);
+  });
+
+  it("keeps wrapper identity empty when no mint resolved", () => {
+    const empty = BoardComposer.unavailable("ZZZZ").routes[0]!;
+    expect(BoardView.wrapperMintLine(empty)).toMatch(/No Solana mint resolved/);
+    expect(BoardView.wrapperIdentityTitle(empty)).toBe("ZZZZx");
+    expect(BoardView.inventorySourceLabel(null)).toBeNull();
+    expect(BoardView.inventorySourceLabel("xstocks")).toMatch(/xStocks/);
+  });
+
+  it("only adds a cash-close hint while the session is open, so after-hours copy is not repeated", () => {
+    const base = BoardComposer.unavailable("AAPL").session;
+    const closed = board({
+      session: { ...base, cashOpen: false, afterHoursNarrative: true, nextOpen: 1_800_000_000 },
+    });
+    expect(BoardView.nextSessionHint(closed)).toBeNull();
+    const open = board({
+      session: {
+        ...base,
+        cashOpen: true,
+        afterHoursNarrative: false,
+        nextClose: 1_800_000_000,
+        detail: "NYSE/Nasdaq regular session · 09:30–16:00 ET.",
+      },
+    });
+    expect(BoardView.nextSessionHint(open)).toMatch(/Cash close/);
+  });
+
+  it("explains the peg and the page without promising fills", () => {
+    expect(BoardView.pegGuide("AAPL")[0]).toMatch(/Equity\.US\.AAPL\/USD/);
+    expect(BoardView.pageHonesty()).toMatch(/will not invent/);
+    expect(BoardView.homeIntro()).toMatch(/No invented prices/);
+  });
 });
 
 function mark(partial: Partial<BoardMark> & Pick<BoardMark, "kind">): BoardMark {
@@ -136,6 +202,8 @@ function mark(partial: Partial<BoardMark> & Pick<BoardMark, "kind">): BoardMark 
     label: partial.kind === "equity" ? "Broker / cash" : "xStock",
     issuer: "test",
     symbol: "Equity.US.AAPL/USD",
+    displaySymbol: "AAPL/USD",
+    description: "APPLE INC",
     feedId: null,
     priceUsd: 100,
     confidenceUsd: null,

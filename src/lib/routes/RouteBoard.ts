@@ -1,4 +1,4 @@
-import type { RouteVenue, SwapQuote, WrapperKind, WrapperRouteCard } from "@/lib/types";
+import type { InventoryNameSource, RouteVenue, SwapQuote, WrapperKind, WrapperRouteCard } from "@/lib/types";
 
 export class RouteBoard {
   static venueTitle(venue: RouteVenue): string {
@@ -20,6 +20,8 @@ export class RouteBoard {
     mint: string | null;
     decimals: number | null;
     quotes: SwapQuote[];
+    name?: string | null;
+    nameSource?: InventoryNameSource | null;
   }): WrapperRouteCard {
     const live = params.quotes.filter((quote) => quote.available && quote.effectiveUsdPerShare);
     const cheapest = live.slice().sort((a, b) => (a.effectiveUsdPerShare ?? Infinity) - (b.effectiveUsdPerShare ?? Infinity))[0] ?? null;
@@ -32,6 +34,8 @@ export class RouteBoard {
       label: params.label,
       mint: params.mint,
       decimals: params.decimals,
+      name: params.name ?? null,
+      nameSource: params.nameSource ?? null,
       quotes: params.quotes,
       featured,
       cheapest,

@@ -1,8 +1,11 @@
 import { Format } from "@/lib/ui/Format";
 import { RouteBoard } from "@/lib/routes/RouteBoard";
+import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
+import { SessionClock } from "@/lib/market/SessionClock";
 import type {
   BoardMark,
   BoardPayload,
+  InventoryNameSource,
   PegVsEquity,
   RouteVenue,
   SwapQuote,
@@ -211,5 +214,103 @@ export class BoardView {
 
   static routeCards(board: BoardPayload): WrapperRouteCard[] {
     return board.routes;
+  }
+
+  static companyLabel(board: BoardPayload): string {
+    if (board.name && board.name !== board.ticker) {
+      return board.name;
+    }
+    return TickerUniverse.catalogName(board.ticker) ?? board.ticker;
+  }
+
+  static cashPrintContext(board: BoardPayload): string {
+    const sessionClosed = !board.session.cashOpen;
+    if (this.lastCashPrint(board.equity, sessionClosed)) {
+      return "US cash is shut. The cash number is a last print, not a live broker quote. Wrappers can still print.";
+    }
+    if (board.session.cashOpen) {
+      return "US cash session is open (09:30–16:00 ET). Wrapper pegs are vs this cash print.";
+    }
+    if (board.equity.priceUsd === null) {
+      return "No cash print on this board — PegLens will not invent one.";
+    }
+    return board.session.detail;
+  }
+
+  static nextSessionHint(board: BoardPayload): string | null {
+    if (board.session.cashOpen && board.session.nextClose) {
+      return `Cash close ${SessionClock.formatNy(board.session.nextClose)}.`;
+    }
+    return null;
+  }
+
+  static markSymbolLine(mark: BoardMark): string {
+    if (mark.displaySymbol && mark.displaySymbol !== mark.symbol) {
+      return `${mark.symbol} · ${mark.displaySymbol}`;
+    }
+    return mark.symbol;
+  }
+
+  static markFeedLine(mark: BoardMark): string {
+    if (!mark.feedId) {
+      return "No Pyth feed id";
+    }
+    const parts = [`Pyth ${Format.feedId(mark.feedId)}`];
+    const published = Format.publishClock(mark.publishTime);
+    if (published) {
+      parts.push(published);
+    } else if (mark.source === "pyth-terminal") {
+      parts.push("terminal snapshot");
+    }
+    const conf = Format.confidence(mark.confidenceUsd);
+    if (conf) {
+      parts.push(conf);
+    }
+    return parts.join(" · ");
+  }
+
+  static wrapperCard(board: BoardPayload, kind: BoardMark["kind"]): WrapperRouteCard | null {
+    if (kind === "equity") {
+      return null;
+    }
+    return board.routes.find((route) => route.kind === kind) ?? null;
+  }
+
+  static inventorySourceLabel(source: InventoryNameSource | null): string | null {
+    if (source === "xstocks") {
+      return "xStocks public inventory";
+    }
+    if (source === "jupiter") {
+      return "Jupiter token search";
+    }
+    return null;
+  }
+
+  static wrapperIdentityTitle(card: WrapperRouteCard): string {
+    return card.name && card.name !== card.label ? `${card.label} · ${card.name}` : card.label;
+  }
+
+  static wrapperMintLine(card: WrapperRouteCard): string {
+    if (!card.mint) {
+      return "No Solana mint resolved — no swap route to quote.";
+    }
+    const decimals = card.decimals == null ? "decimals —" : `decimals ${card.decimals}`;
+    return `mint ${Format.mint(card.mint)} · ${decimals}`;
+  }
+
+  static pegGuide(ticker: string): string[] {
+    return [
+      `Cash is the US listed print (Pyth Equity.US.${ticker}/USD). Outside 09:30–16:00 ET it is a last cash print, not a live bid/ask.`,
+      "xStock and Ondo are on-chain wrappers. Peg is wrapper minus cash, in bps. Empty is empty — not zero.",
+      "Venue quotes are indicative $100 USDC in across Raydium, Jupiter, and Meteora. PegLens never fills or signs.",
+    ];
+  }
+
+  static pageHonesty(): string {
+    return "Not a broker. Quotes never execute. Missing Pyth marks, mints, or pools stay empty — PegLens will not invent market cap, volume, news, or a fill.";
+  }
+
+  static homeIntro(): string {
+    return "Most popular names on this desk. Open a ticker for live cash vs xStock vs Ondo marks. No invented prices.";
   }
 }

@@ -12,6 +12,9 @@ describe("BoardComposer.unavailable", () => {
     expect(board.cheapestHonest).toBeNull();
     expect(board.routes.every((route) => route.featured === null)).toBe(true);
     expect(board.warnings[0]).toMatch(/Venues unreachable/);
+    expect(board.equity.displaySymbol).toBeNull();
+    expect(board.equity.description).toBeNull();
+    expect(board.routes.every((route) => route.name === null && route.mint === null)).toBe(true);
     expect(BoardComposer.isEmpty(board)).toBe(true);
   });
 });

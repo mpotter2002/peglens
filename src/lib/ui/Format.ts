@@ -63,4 +63,29 @@ export class Format {
     }
     return `${value.slice(0, 4)}…${value.slice(-4)}`;
   }
+
+  static feedId(value: string | null): string {
+    if (!value) {
+      return "—";
+    }
+    const clean = value.replace(/^0x/i, "");
+    if (clean.length <= 12) {
+      return `0x${clean}`;
+    }
+    return `0x${clean.slice(0, 8)}…${clean.slice(-4)}`;
+  }
+
+  static confidence(value: number | null): string | null {
+    if (value === null || !Number.isFinite(value)) {
+      return null;
+    }
+    return `±${this.usd(value, value >= 1 ? 2 : 4)} conf`;
+  }
+
+  static publishClock(unixSeconds: number | null): string | null {
+    if (!unixSeconds || !Number.isFinite(unixSeconds)) {
+      return null;
+    }
+    return this.clock(unixSeconds * 1000);
+  }
 }
