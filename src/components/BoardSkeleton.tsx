@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function BoardSkeleton() {
   return (
     <div className="min-h-screen" aria-busy="true" aria-live="polite">
-      <header className="sticky top-0 z-40 border-b border-transparent bg-background">
+      <header className="desk-header sticky top-0 z-40">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">

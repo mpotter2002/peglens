@@ -164,10 +164,8 @@ function DeskChrome({ board }: { board: BoardPayload }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full transition-[background-color,border-color,backdrop-filter] duration-200",
-        scrolled
-          ? "border-b border-border/80 bg-background/55 shadow-none backdrop-blur-xl"
-          : "border-b border-transparent bg-background",
+        "desk-header sticky top-0 z-40 w-full",
+        scrolled && "is-scrolled",
       )}
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
