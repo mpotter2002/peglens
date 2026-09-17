@@ -108,7 +108,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen">
       <DeskChrome board={board} />
       <div className="mx-auto max-w-7xl space-y-6 overflow-x-hidden px-4 py-6 sm:px-6">
         <TickerDesk active={active} onSelect={selectTicker} sessionDetail={board.session.detail} />
@@ -164,9 +164,9 @@ function DeskChrome({ board }: { board: BoardPayload }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 transition-[background-color,border-color,backdrop-filter] duration-200",
+        "sticky top-0 z-40 w-full transition-[background-color,border-color,backdrop-filter] duration-200",
         scrolled
-          ? "border-b border-border/70 bg-background/70 backdrop-blur-xl"
+          ? "border-b border-border/80 bg-background/55 shadow-none backdrop-blur-xl"
           : "border-b border-transparent bg-background",
       )}
     >
