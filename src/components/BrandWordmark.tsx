@@ -17,7 +17,7 @@ export function BrandWordmark({ className }: { className?: string }) {
         alt=""
         fill
         sizes="15rem"
-        className="hidden object-cover object-center dark:block"
+        className="hidden object-cover object-center mix-blend-screen dark:block"
         aria-hidden="true"
         priority
       />
