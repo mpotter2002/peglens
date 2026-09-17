@@ -109,7 +109,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <DeskChrome board={board} />
       <div className="mx-auto grid max-w-7xl gap-6 overflow-x-hidden px-4 py-6 sm:px-6 lg:grid-cols-[11.5rem_minmax(0,1fr)_minmax(18rem,20.5rem)]">
         <TickerRail active={active} onSelect={selectTicker} />
@@ -384,7 +384,7 @@ function RouteTicket({ board }: { board: BoardPayload }) {
         <CardTitle className="font-display text-2xl font-normal leading-tight break-words">
           {BoardView.routeHeadline(board)}
         </CardTitle>
-        <CardDescription className="text-pretty">{BoardView.routeStory()}</CardDescription>
+        <CardDescription className="break-words text-pretty hyphens-auto">{BoardView.routeStory()}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {featured ? (
@@ -398,10 +398,10 @@ function RouteTicket({ board }: { board: BoardPayload }) {
           </Empty>
         )}
         {cta && featured?.ctaUrl ? (
-          <Button asChild size="lg" className="w-full min-w-0 whitespace-normal">
-            <a href={featured.ctaUrl} target="_blank" rel="noreferrer">
+          <Button asChild size="lg" className="h-auto w-full min-w-0 whitespace-normal py-2">
+            <a href={featured.ctaUrl} target="_blank" rel="noreferrer" className="whitespace-normal">
               {cta}
-              <ArrowUpRight />
+              <ArrowUpRight className="size-4 shrink-0" />
             </a>
           </Button>
         ) : null}
