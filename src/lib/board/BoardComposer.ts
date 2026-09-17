@@ -4,6 +4,7 @@ import { FeedResolver } from "@/lib/pyth/FeedResolver";
 import { HermesClient } from "@/lib/pyth/HermesClient";
 import { PythTerminalClient } from "@/lib/pyth/PythTerminalClient";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
+import { DemoHost } from "@/lib/demo/DemoHost";
 import { MintResolver } from "@/lib/wrappers/MintResolver";
 import { RaydiumRouter } from "@/lib/routes/RaydiumRouter";
 import { JupiterRouter } from "@/lib/routes/JupiterRouter";
@@ -25,22 +26,127 @@ const QUOTE_USD = 100;
 export class BoardComposer {
   static async compose(rawTicker: string): Promise<BoardPayload> {
     const ticker = TickerUniverse.normalize(rawTicker);
-    return TtlCache.remember(`board:${ticker}`, 6_000, () => this.build(ticker));
+    try {
+      return await TtlCache.remember(`board:${ticker}`, 6_000, () => this.build(ticker), {
+        skipCache: (board) => this.isEmpty(board),
+      });
+    } catch {
+      return this.unavailable(ticker, "Board could not reach Pyth or DEX quotes. Empty cells are empty — not estimates.");
+    }
+  }
+
+  static unavailable(ticker: string, note?: string): BoardPayload {
+    const session = SessionClock.snapshot();
+    const message = note ?? "Live venues did not return a print.";
+    const equity = this.missingMark("equity", "Broker / cash", "US listed equity", message);
+    const xstock = this.missingMark("xstock", "xStock", "Backed / xStocks", message);
+    const ondo = this.missingMark("ondo", "Ondo", "Ondo Global Markets", message);
+    const peg = this.emptyPeg();
+    const routes = [
+      RouteBoard.card({ kind: "xstock", label: `${ticker}x`, mint: null, decimals: null, quotes: [] }),
+      RouteBoard.card({ kind: "ondo", label: `${ticker}on`, mint: null, decimals: null, quotes: [] }),
+    ];
+    return {
+      ticker,
+      name: ticker,
+      fetchedAt: Date.now(),
+      demo: true,
+      pythKeyConfigured: Boolean(HermesClient.apiKey()),
+      host: DemoHost.snapshot(),
+      session,
+      equity,
+      wrappers: [
+        { ...xstock, peg },
+        { ...ondo, peg },
+      ],
+      redemptionRate: null,
+      quoteSizeUsd: QUOTE_USD,
+      routes,
+      cheapestHonest: null,
+      warnings: [message],
+    };
+  }
+
+  static isEmpty(board: BoardPayload): boolean {
+    const noMarks =
+      board.equity.priceUsd === null && board.wrappers.every((wrapper) => wrapper.priceUsd === null);
+    const noRoutes = board.routes.every((route) => !route.featured);
+    return noMarks && noRoutes;
   }
 
   private static async build(ticker: string): Promise<BoardPayload> {
     const warnings: string[] = [];
-    const feeds = await FeedResolver.resolve(ticker);
     const pythKeyConfigured = Boolean(HermesClient.apiKey());
+    const inAtomic = String(QUOTE_USD * 10 ** MintResolver.USDC_DECIMALS);
+
+    const marksPromise = this.loadMarks(ticker, pythKeyConfigured, warnings);
+    const routesPromise = this.loadRoutes(ticker, inAtomic);
+
+    const [{ feeds, equity, xstock, ondo }, routes] = await Promise.all([marksPromise, routesPromise]);
+
+    const session = SessionClock.snapshot(
+      new Date(),
+      feeds.equity
+        ? {
+            isOpen: feeds.equity.isOpen ?? false,
+            nextOpen: feeds.equity.nextOpen,
+            nextClose: feeds.equity.nextClose,
+          }
+        : undefined,
+    );
+
+    const wrappers = [xstock, ondo].map((mark) => ({
+      ...mark,
+      peg: this.peg(mark, equity),
+    }));
+
+    if (!feeds.equity) {
+      warnings.push(`No Pyth Equity.US.${ticker}/USD feed.`);
+    }
+    if (!feeds.xstock) {
+      warnings.push(`No Pyth Crypto.${ticker}X/USD feed.`);
+    }
+    if (!feeds.ondo) {
+      warnings.push(`No Pyth Crypto.${ticker}ON/USD feed.`);
+    }
+
+    return {
+      ticker,
+      name: feeds.name,
+      fetchedAt: Date.now(),
+      demo: true,
+      pythKeyConfigured,
+      host: DemoHost.snapshot(),
+      session,
+      equity,
+      wrappers,
+      redemptionRate: feeds.redemptionRate,
+      quoteSizeUsd: QUOTE_USD,
+      routes,
+      cheapestHonest: this.cheapestHonest(routes, equity.priceUsd),
+      warnings,
+    };
+  }
+
+  private static async loadMarks(
+    ticker: string,
+    pythKeyConfigured: boolean,
+    warnings: string[],
+  ): Promise<{
+    feeds: Awaited<ReturnType<typeof FeedResolver.resolve>> & {
+      redemptionRate: BoardPayload["redemptionRate"];
+    };
+    equity: BoardMark;
+    xstock: BoardMark;
+    ondo: BoardMark;
+  }> {
+    const feeds = await FeedResolver.resolve(ticker);
     const feedList = [feeds.equity, feeds.xstock, feeds.ondo, feeds.redemption].filter(
       (feed): feed is HermesFeed => Boolean(feed),
     );
     const hermesPrices = await HermesClient.latestPrices(feedList.map((feed) => feed.id));
     if (pythKeyConfigured && hermesPrices.length === 0 && feedList.length > 0) {
       warnings.push("Pyth API key is set but Hermes latest prices did not return. Falling back to Pyth Terminal.");
-    }
-    if (!pythKeyConfigured) {
-      warnings.push("No PYTH_API_KEY — live marks come from Pyth Terminal snapshots plus Hermes session metadata.");
     }
 
     const [equity, xstock, ondo] = await Promise.all([
@@ -67,23 +173,7 @@ export class BoardComposer {
       }),
     ]);
 
-    const session = SessionClock.snapshot(
-      new Date(),
-      feeds.equity
-        ? {
-            isOpen: feeds.equity.isOpen ?? false,
-            nextOpen: feeds.equity.nextOpen,
-            nextClose: feeds.equity.nextClose,
-          }
-        : undefined,
-    );
-
-    const wrappers = [xstock, ondo].map((mark) => ({
-      ...mark,
-      peg: this.peg(mark, equity),
-    }));
-
-    const redemption = feeds.redemption
+    const redemptionRate = feeds.redemption
       ? {
           symbol: feeds.redemption.symbol,
           value: this.priceFor(feeds.redemption, hermesPrices)?.priceUsd ?? (await this.terminalPrice(feeds.redemption.symbol)),
@@ -92,45 +182,53 @@ export class BoardComposer {
         }
       : null;
 
-    const inAtomic = String(QUOTE_USD * 10 ** MintResolver.USDC_DECIMALS);
-    const [xMint, ondoMint] = await Promise.all([MintResolver.xstock(ticker), MintResolver.ondo(ticker)]);
+    return {
+      feeds: {
+        ...feeds,
+        redemptionRate: redemptionRate
+          ? {
+              ...redemptionRate,
+              source: redemptionRate.value === null ? "unavailable" : redemptionRate.source,
+            }
+          : null,
+      },
+      equity,
+      xstock,
+      ondo,
+    };
+  }
 
-    const routes = await Promise.all([
+  private static async loadRoutes(ticker: string, inAtomic: string): Promise<WrapperRouteCard[]> {
+    const [xMint, ondoMint] = await Promise.all([MintResolver.xstock(ticker), MintResolver.ondo(ticker)]);
+    return Promise.all([
       this.routeCard("xstock", `${ticker}x`, xMint, inAtomic),
       this.routeCard("ondo", `${ticker}on`, ondoMint, inAtomic),
     ]);
+  }
 
-    if (!feeds.equity) {
-      warnings.push(`No Pyth Equity.US.${ticker}/USD feed.`);
-    }
-    if (!feeds.xstock) {
-      warnings.push(`No Pyth Crypto.${ticker}X/USD feed.`);
-    }
-    if (!feeds.ondo) {
-      warnings.push(`No Pyth Crypto.${ticker}ON/USD feed.`);
-    }
-
+  private static missingMark(
+    kind: BoardMark["kind"],
+    label: string,
+    issuer: string,
+    note: string,
+  ): BoardMark {
     return {
-      ticker,
-      name: feeds.name,
-      fetchedAt: Date.now(),
-      demo: true,
-      pythKeyConfigured,
-      session,
-      equity,
-      wrappers,
-      redemptionRate: redemption
-        ? {
-            ...redemption,
-            value: redemption.value,
-            source: redemption.value === null ? "unavailable" : redemption.source,
-          }
-        : null,
-      quoteSizeUsd: QUOTE_USD,
-      routes,
-      cheapestHonest: this.cheapestHonest(routes, equity.priceUsd),
-      warnings,
+      kind,
+      label,
+      issuer,
+      symbol: "—",
+      feedId: null,
+      priceUsd: null,
+      confidenceUsd: null,
+      publishTime: null,
+      source: "unavailable",
+      live: false,
+      note,
     };
+  }
+
+  private static emptyPeg(): PegVsEquity {
+    return { bps: null, pct: null, dollars: null, sign: "unavailable" };
   }
 
   private static async mark(params: {
@@ -141,19 +239,7 @@ export class BoardComposer {
     hermesPrices: HermesPrice[];
   }): Promise<BoardMark> {
     if (!params.feed) {
-      return {
-        kind: params.kind,
-        label: params.label,
-        issuer: params.issuer,
-        symbol: "—",
-        feedId: null,
-        priceUsd: null,
-        confidenceUsd: null,
-        publishTime: null,
-        source: "unavailable",
-        live: false,
-        note: "Pyth does not list this feed.",
-      };
+      return this.missingMark(params.kind, params.label, params.issuer, "Pyth does not list this feed.");
     }
     const hermes = this.priceFor(params.feed, params.hermesPrices);
     if (hermes) {
@@ -214,7 +300,7 @@ export class BoardComposer {
 
   private static peg(wrapper: BoardMark, equity: BoardMark): PegVsEquity {
     if (wrapper.priceUsd === null || equity.priceUsd === null) {
-      return { bps: null, pct: null, dollars: null, sign: "unavailable" };
+      return this.emptyPeg();
     }
     const bps = PegMath.premiumBps(wrapper.priceUsd, equity.priceUsd);
     const dollars = PegMath.dollars(wrapper.priceUsd, equity.priceUsd);
@@ -235,17 +321,21 @@ export class BoardComposer {
     if (!mint) {
       return RouteBoard.card({ kind, label, mint: null, decimals: null, quotes: [] });
     }
-    const [raydium, jupiter] = await Promise.all([
-      RaydiumRouter.quote({ outputMint: mint.mint, outDecimals: mint.decimals, inAtomic }),
-      JupiterRouter.quote({ outputMint: mint.mint, outDecimals: mint.decimals, inAtomic }),
-    ]);
-    return RouteBoard.card({
-      kind,
-      label,
-      mint: mint.mint,
-      decimals: mint.decimals,
-      quotes: [raydium, jupiter],
-    });
+    try {
+      const [raydium, jupiter] = await Promise.all([
+        RaydiumRouter.quote({ outputMint: mint.mint, outDecimals: mint.decimals, inAtomic }),
+        JupiterRouter.quote({ outputMint: mint.mint, outDecimals: mint.decimals, inAtomic }),
+      ]);
+      return RouteBoard.card({
+        kind,
+        label,
+        mint: mint.mint,
+        decimals: mint.decimals,
+        quotes: [raydium, jupiter],
+      });
+    } catch {
+      return RouteBoard.card({ kind, label, mint: mint.mint, decimals: mint.decimals, quotes: [] });
+    }
   }
 
   private static cheapestHonest(

@@ -28,13 +28,18 @@ export class RaydiumRouter {
       `https://transaction-v1.raydium.io/compute/swap-base-in` +
       `?inputMint=${inputMint}&outputMint=${params.outputMint}` +
       `&amount=${params.inAtomic}&slippageBps=50&txVersion=V0`;
-    const { ok, text } = await HttpJson.get(url);
+    const { ok, status, text } = await HttpJson.get(url);
     const body = HttpJson.parse<RaydiumCompute>(text);
     if (!ok || !body?.success || !body.data?.outputAmount) {
       return {
         venue: "raydium",
         available: false,
-        reason: body?.msg === "ROUTE_NOT_FOUND" ? "Raydium has no route for this mint" : "Raydium quote unavailable",
+        reason:
+          status === 0
+            ? "Raydium quote timed out"
+            : body?.msg === "ROUTE_NOT_FOUND"
+              ? "Raydium has no route for this mint"
+              : "Raydium quote unavailable",
         inMint: inputMint,
         outMint: params.outputMint,
         inAmountAtomic: params.inAtomic,

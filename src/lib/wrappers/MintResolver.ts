@@ -32,7 +32,10 @@ export class MintResolver {
 
   static async xstock(ticker: string): Promise<SolanaMint | null> {
     const symbol = `${ticker.toUpperCase()}x`;
-    return TtlCache.remember(`mint:xstock:${symbol}`, 30 * 60_000, async () => {
+    return TtlCache.remember(
+      `mint:xstock:${symbol}`,
+      30 * 60_000,
+      async () => {
       const url = `https://api.xstocks.fi/api/v2/public/assets/${encodeURIComponent(symbol)}`;
       const { ok, text } = await HttpJson.get(url);
       if (!ok) {
@@ -49,12 +52,17 @@ export class MintResolver {
         symbol,
         name: asset?.name ?? `${ticker} xStock`,
       };
-    });
+      },
+      { skipCache: (value) => value === null },
+    );
   }
 
   static async ondo(ticker: string): Promise<SolanaMint | null> {
     const symbol = `${ticker.toUpperCase()}on`;
-    return TtlCache.remember(`mint:ondo:${symbol}`, 30 * 60_000, async () => {
+    return TtlCache.remember(
+      `mint:ondo:${symbol}`,
+      30 * 60_000,
+      async () => {
       const url = `https://lite-api.jup.ag/tokens/v2/search?query=${encodeURIComponent(symbol)}`;
       const { ok, text } = await HttpJson.get(url);
       if (!ok) {
@@ -76,6 +84,8 @@ export class MintResolver {
         symbol,
         name: match.name ?? `${ticker} (Ondo Tokenized)`,
       };
-    });
+      },
+      { skipCache: (value) => value === null },
+    );
   }
 }

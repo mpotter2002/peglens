@@ -1,3 +1,5 @@
+import { HttpJson } from "@/lib/net/HttpJson";
+
 export type HermesFeed = {
   id: string;
   symbol: string;
@@ -45,7 +47,7 @@ export class HermesClient {
     if (!ok) {
       return [];
     }
-    const parsed = this.parseJson<RawFeed[]>(text);
+    const parsed = HttpJson.parse<RawFeed[]>(text);
     if (!Array.isArray(parsed)) {
       return [];
     }
@@ -66,21 +68,26 @@ export class HermesClient {
     if (!ok) {
       return [];
     }
-    const body = this.parseJson<RawLatest>(text);
+    const body = HttpJson.parse<RawLatest>(text);
     if (!body?.parsed) {
       return [];
     }
-    return body.parsed.map((item) => {
-      const expo = Number(item.price.expo);
-      const priceUsd = Number(item.price.price) * 10 ** expo;
-      const confidenceUsd = Number(item.price.conf) * 10 ** expo;
-      return {
-        id: item.id.replace(/^0x/, ""),
-        priceUsd,
-        confidenceUsd,
-        publishTime: item.price.publish_time,
-      };
-    });
+    return body.parsed
+      .map((item) => {
+        const expo = Number(item.price.expo);
+        const priceUsd = Number(item.price.price) * 10 ** expo;
+        const confidenceUsd = Number(item.price.conf) * 10 ** expo;
+        if (!Number.isFinite(priceUsd)) {
+          return null;
+        }
+        return {
+          id: item.id.replace(/^0x/, ""),
+          priceUsd,
+          confidenceUsd: Number.isFinite(confidenceUsd) ? confidenceUsd : 0,
+          publishTime: item.price.publish_time,
+        };
+      })
+      .filter((row): row is HermesPrice => Boolean(row));
   }
 
   private static normalizeFeed(feed: RawFeed): HermesFeed {
@@ -98,23 +105,12 @@ export class HermesClient {
   }
 
   private static async request(url: string, withKey: boolean): Promise<{ ok: boolean; text: string }> {
-    const headers: Record<string, string> = {
-      accept: "application/json",
-      "user-agent": "PegLens/0.1 (https://github.com/mpotter2002/peglens)",
-    };
     const key = this.apiKey();
+    const headers: Record<string, string> = { accept: "application/json" };
     if (withKey && key) {
       headers.authorization = `Bearer ${key}`;
     }
-    const response = await fetch(url, { headers, cache: "no-store" });
-    return { ok: response.ok, text: await response.text() };
-  }
-
-  private static parseJson<T>(text: string): T | null {
-    try {
-      return JSON.parse(text) as T;
-    } catch {
-      return null;
-    }
+    const { ok, text } = await HttpJson.get(url, { headers });
+    return { ok, text };
   }
 }

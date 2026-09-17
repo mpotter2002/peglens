@@ -9,6 +9,13 @@ export type SessionName =
 
 export type PriceSource = "hermes" | "pyth-terminal" | "unavailable";
 
+export type DemoEnv = "local" | "preview" | "production";
+
+export type DemoHostInfo = {
+  env: DemoEnv;
+  label: string;
+};
+
 export type RouteVenue = "raydium" | "jupiter" | "dflow";
 
 export type PegSign = "premium" | "discount" | "flat" | "unavailable";
@@ -82,6 +89,7 @@ export type BoardPayload = {
   fetchedAt: number;
   demo: boolean;
   pythKeyConfigured: boolean;
+  host: DemoHostInfo;
   session: SessionSnapshot;
   equity: BoardMark;
   wrappers: Array<BoardMark & { peg: PegVsEquity }>;

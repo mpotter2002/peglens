@@ -14,8 +14,11 @@ export type ResolvedFeeds = {
 export class FeedResolver {
   static async resolve(ticker: string): Promise<ResolvedFeeds> {
     const symbol = ticker.trim().toUpperCase();
-    const feeds = await TtlCache.remember(`pyth-feeds:${symbol}`, 10 * 60_000, () =>
-      HermesClient.searchFeeds(symbol),
+    const feeds = await TtlCache.remember(
+      `pyth-feeds:${symbol}`,
+      10 * 60_000,
+      () => HermesClient.searchFeeds(symbol),
+      { skipCache: (value) => value.length === 0 },
     );
     const equity = this.pick(feeds, `Equity.US.${symbol}/USD`);
     const xstock = this.pick(feeds, `Crypto.${symbol}X/USD`);

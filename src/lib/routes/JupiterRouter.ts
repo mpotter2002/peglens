@@ -24,7 +24,7 @@ export class JupiterRouter {
     const url =
       `https://lite-api.jup.ag/swap/v1/quote?inputMint=${inputMint}` +
       `&outputMint=${params.outputMint}&amount=${params.inAtomic}&slippageBps=50`;
-    const { ok, text } = await HttpJson.get(url);
+    const { ok, status, text } = await HttpJson.get(url);
     const body = HttpJson.parse<JupiterQuote>(text);
     const hops = (body?.routePlan ?? [])
       .map((hop) => hop.swapInfo?.label)
@@ -33,7 +33,7 @@ export class JupiterRouter {
       return {
         venue: "jupiter",
         available: false,
-        reason: body?.error || "Jupiter quote unavailable",
+        reason: status === 0 ? "Jupiter quote timed out" : body?.error || "Jupiter quote unavailable",
         inMint: inputMint,
         outMint: params.outputMint,
         inAmountAtomic: params.inAtomic,
