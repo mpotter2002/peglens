@@ -8,16 +8,16 @@ export function BrandWordmark({ className }: { className?: string }) {
         src="/brand/wordmark-light.png"
         alt="xStockLens"
         fill
-        sizes="15rem"
-        className="object-cover object-center dark:hidden"
+        sizes="(min-width: 640px) 10rem, 9rem"
+        className="object-contain object-left dark:hidden"
         priority
       />
       <Image
         src="/brand/wordmark-dark.png"
         alt=""
         fill
-        sizes="15rem"
-        className="hidden object-cover object-center mix-blend-screen dark:block"
+        sizes="(min-width: 640px) 10rem, 9rem"
+        className="hidden object-contain object-left mix-blend-screen dark:block"
         aria-hidden="true"
         priority
       />
