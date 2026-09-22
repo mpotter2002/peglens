@@ -9,7 +9,7 @@ Pick a ticker. Compare the US cash/equity mark to the xStock and Ondo wrappers. 
 | | |
 | --- | --- |
 | Local | `npm install && npm run dev` → [http://localhost:3000](http://localhost:3000) (lands on **most popular** list) |
-| **HOSTED_URL** | **TBD** — Vercel GitHub App is not installed on this repo yet ([install](https://github.com/apps/vercel)) |
+| **Hosted** | [https://peglens.vercel.app](https://peglens.vercel.app) — production build of `main`, no keys set |
 | Keys | None required |
 
 Hackathon: [Stocklana](https://hackathons.solana.com/hackathons/stocklana) · main track + Pyth bounty.
@@ -17,6 +17,8 @@ Hackathon: [Stocklana](https://hackathons.solana.com/hackathons/stocklana) · ma
 ## How to test (60 seconds)
 
 No API keys required. Empty cells are empty — PegLens does not invent prices or fills.
+
+Fastest path: open [https://peglens.vercel.app](https://peglens.vercel.app) and follow **What you should see on AAPL** below. Nothing to install.
 
 ### Local
 
@@ -41,7 +43,7 @@ curl -s http://localhost:3000/api/board/AAPL | head
 2. Session strip. Outside 09:30–16:00 ET cash wears a **Last cash print** badge — wrappers keep quoting. That is a last print, not a live bid/ask.
 3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero. **How to read this peg** is on the desk.
 4. **Venue comparison** on the page (plus the right-rail CTA). **Cheapest honest route** only when quotes compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** are listed (honest empties if a venue has no pool). Caption: **Quotes never execute**.
-5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). **Local / test** (or **Vercel preview**) and **Not a broker** chips stay on. Wordmark returns **home**. PegLens never signs or fills.
+5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). Host chip (**Hosted** on peglens.vercel.app, **Vercel preview** on preview deploys, **Local / test** on your machine) and **Not a broker** stay on. Wordmark returns **home**. PegLens never signs or fills.
 6. Type **ZZZZ** in ticker search (or tap a popular chip, or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
 
 If a mark or route is missing, that is the honest empty state. Try AAPL again, or set the optional Hermes key below.
@@ -56,16 +58,15 @@ Without a key, PegLens still uses:
 - [Pyth Terminal](https://app.pyth.com) snapshots for the printed prices
 - Raydium Trade API + Jupiter Swap API for executable quotes. Meteora is a Jupiter quote restricted to Meteora hops (no invented pool).
 
-### Hosted preview (no secrets)
+### Hosted (no secrets)
 
-**HOSTED_URL: TBD.** GitHub → Vercel is blocked until the [Vercel GitHub App](https://github.com/apps/vercel) is installed on this repo. Do not invent a live URL. Use local until then.
+Live at **[https://peglens.vercel.app](https://peglens.vercel.app)**. Vercel builds `main` to production and every PR to a preview URL. No environment variables are set — the hosted demo runs without `PYTH_API_KEY`, same as local.
 
-Once the app is installed, this deploys as a stock Next.js app. **Do not add env vars** for the first preview — the demo is designed to run without `PYTH_API_KEY`.
+- Production chip reads **Hosted**. PR preview deploys read **Vercel preview**.
+- Smoke: `curl -s https://peglens.vercel.app/api/health` → `host.label` is `Hosted`, `pythKeyConfigured` is `false`.
+- Optional later: add `PYTH_API_KEY` on the Vercel project for signed Hermes ticks. Not required.
 
-1. [Import the GitHub repo on Vercel](https://vercel.com/new/clone?repository-url=https://github.com/mpotter2002/peglens).
-2. Leave Environment Variables empty.
-3. Deploy. Open the preview URL — same AAPL path as local. The chip should read **Vercel preview**.
-4. Optional later: add `PYTH_API_KEY` on the Vercel project for signed Hermes ticks. Not required.
+Deploying your own copy: [import the repo on Vercel](https://vercel.com/new/clone?repository-url=https://github.com/mpotter2002/peglens), leave Environment Variables empty, deploy.
 
 Hobby functions are capped at ~10s. PegLens times out upstreams (~2.5–3s) and renders honest empties instead of hanging.
 
