@@ -173,15 +173,16 @@
   -webkit-backdrop-filter: blur(8px) saturate(1.05);
 }
 
+/* Wordmark PNGs are cropped to the artwork (1049×372). Keep the box at the
+   same ratio and use object-contain so the candlestick tips never clip. */
 .brand-wordmark {
-  width: 12.75rem;
-  height: 2.65rem;
+  aspect-ratio: 1049 / 372;
+  height: 3rem;
 }
 
 @media (min-width: 640px) {
   .brand-wordmark {
-    width: 14.5rem;
-    height: 3rem;
+    height: 3.5rem;
   }
 }
 
