@@ -12,12 +12,12 @@ Recording checklist: [DEMO.md](./DEMO.md). Technical depth: [README.md](./README
 
 | | |
 | --- | --- |
-| **HOSTED_URL** | **TBD** |
-| Why | Vercel hosted deploy is blocked until the [Vercel GitHub App](https://github.com/apps/vercel) is installed on [mpotter2002/peglens](https://github.com/mpotter2002/peglens). |
+| **Live demo** | **[https://peglens.vercel.app](https://peglens.vercel.app)** |
+| Build | Production deploy of `main` on Vercel. No API keys set. |
 
-Do not treat a guessed `*.vercel.app` hostname as live. Run locally for this sitting.
+Start here. Open [https://peglens.vercel.app](https://peglens.vercel.app) and run the **60-second smoke** below. Nothing to install. Local run is the fallback.
 
-## Run locally
+## Run locally (fallback)
 
 No API keys. Node 20+.
 
@@ -34,11 +34,11 @@ curl -s http://localhost:3000/api/health
 curl -s http://localhost:3000/api/board/AAPL | head
 ```
 
-`host.label` should read `Local / test`. `pythKeyConfigured` is `false` unless you set a key.
+`host.label` should read `Local / test` locally (`Hosted` on [peglens.vercel.app/api/health](https://peglens.vercel.app/api/health)). `pythKeyConfigured` is `false` unless you set a key.
 
 ## 60-second smoke
 
-1. **Home** — most popular tickers as the primary list. Search or tap to open a desk (`/?t=AAPL`).
+1. **Home** — header chips **Hosted** (or **Local / test**) and **Not a broker**. Most popular tickers as the primary list. Search or tap to open a desk (`/?t=AAPL`).
 2. **AAPL cash hero** — ticker is the title; company label from Pyth (else catalog). The large number is the broker/cash print. Caption is **Broker / cash**. Three mark cards include peg, feed id, and mint when known.
 3. **Venue comparison** — on the desk plus the right-rail CTA. **Cheapest honest route** only when venues compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** listed as alternatives. Caption includes **Quotes never execute**.
 4. **Theme toggle** — header control cycles **System → Light → Dark**. Default is **light**.
