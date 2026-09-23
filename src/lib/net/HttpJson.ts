@@ -16,7 +16,7 @@ export class HttpJson {
       headers.set("accept", "application/json, text/plain, */*");
     }
     if (!headers.has("user-agent")) {
-      headers.set("user-agent", "PegLens/0.1 (https://github.com/mpotter2002/peglens)");
+      headers.set("user-agent", "xStockLens/0.1 (https://github.com/mpotter2002/xstocklens)");
     }
     try {
       const response = await fetch(url, {

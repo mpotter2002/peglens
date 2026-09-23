@@ -9,26 +9,26 @@ import "./globals.css";
 
 const display = Source_Serif_4({
   subsets: ["latin"],
-  variable: "--font-peglens-display",
+  variable: "--font-xstocklens-display",
   display: "swap",
 });
 
 const sans = IBM_Plex_Sans({
   subsets: ["latin"],
-  variable: "--font-peglens-sans",
+  variable: "--font-xstocklens-sans",
   display: "swap",
   weight: ["400", "500", "600"],
 });
 
 const mono = IBM_Plex_Mono({
   subsets: ["latin"],
-  variable: "--font-peglens-mono",
+  variable: "--font-xstocklens-mono",
   display: "swap",
   weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "PegLens — broker vs chain",
+  title: "xStockLens — broker vs chain",
   description:
     "Live premium/discount board for tokenized stocks. Equity vs xStock vs Ondo, with an honest cheapest-venue CTA when quotes compare.",
   icons: {

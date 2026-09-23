@@ -81,7 +81,7 @@ export function HomeBoard({ host, session }: { host: DemoHostInfo; session: Sess
         <p className="mt-2 hidden text-[11px] text-muted-foreground lg:block">{session.detail}</p>
       </main>
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
-        <p>PegLens · Stocklana · Pyth marks · honest DEX quotes · no custody, no fills.</p>
+        <p>xStockLens · Stocklana · Pyth marks · honest DEX quotes · no custody, no fills.</p>
         <p className="font-mono">{Format.clock(Date.now())}</p>
       </footer>
     </div>

@@ -14,6 +14,7 @@ export interface ThemeRoot {
 }
 
 export class ThemePreference {
+  /** Pre-rename key, kept on purpose so returning visitors keep their saved theme. */
   static readonly STORAGE_KEY = "peglens.theme";
   static readonly DEFAULT: ThemeChoice = "light";
 

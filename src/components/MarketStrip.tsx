@@ -271,7 +271,7 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
       <p className="mt-3 text-[11px] text-muted-foreground">
         {priced > 0
           ? "Right of center: xStock trades above the cash print. Left: below. % of the cash price, then $ per share. Pyth marks, not fills."
-          : "No live Pyth prints right now. PegLens will not draw an estimate."}
+          : "No live Pyth prints right now. xStockLens will not draw an estimate."}
       </p>
     </div>
   );

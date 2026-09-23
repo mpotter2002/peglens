@@ -1,4 +1,4 @@
-# PegLens
+# xStockLens
 
 Live **broker vs chain** board for tokenized stocks on Solana.
 
@@ -9,16 +9,16 @@ Pick a ticker. Compare the US cash/equity mark to the xStock and Ondo wrappers. 
 | | |
 | --- | --- |
 | Local | `npm install && npm run dev` → [http://localhost:3000](http://localhost:3000) (lands on **most popular** list) |
-| **Hosted** | [https://peglens.vercel.app](https://peglens.vercel.app) — production build of `main`, no keys set |
+| **Hosted** | [https://xstocklens.vercel.app](https://xstocklens.vercel.app) — production build of `main`, no keys set |
 | Keys | None required |
 
 Hackathon: [Stocklana](https://hackathons.solana.com/hackathons/stocklana) · main track + Pyth bounty.
 
 ## How to test (60 seconds)
 
-No API keys required. Empty cells are empty — PegLens does not invent prices or fills.
+No API keys required. Empty cells are empty — xStockLens does not invent prices or fills.
 
-Fastest path: open [https://peglens.vercel.app](https://peglens.vercel.app) and follow **What you should see on AAPL** below. Nothing to install.
+Fastest path: open [https://xstocklens.vercel.app](https://xstocklens.vercel.app) and follow **What you should see on AAPL** below. Nothing to install.
 
 ### Local
 
@@ -43,7 +43,7 @@ curl -s http://localhost:3000/api/board/AAPL | head
 2. Session strip. Outside 09:30–16:00 ET cash wears a **Last cash print** badge — wrappers keep quoting. That is a last print, not a live bid/ask.
 3. Peg vs cash, as a percent of the cash price. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero. **How to read this peg** is on the desk.
 4. **Venue comparison** on the page (plus the right-rail CTA). **Cheapest honest route** only when quotes compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** are listed (honest empties if a venue has no pool). Caption: **Quotes never execute**.
-5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). Host chip (**Hosted** on peglens.vercel.app, **Vercel preview** on preview deploys, **Local / test** on your machine) and **Not a broker** stay on. Wordmark returns **home**. PegLens never signs or fills.
+5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). Host chip (**Hosted** on xstocklens.vercel.app, **Vercel preview** on preview deploys, **Local / test** on your machine) and **Not a broker** stay on. Wordmark returns **home**. xStockLens never signs or fills.
 6. Type **ZZZZ** in ticker search (or tap a popular chip, or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
 
 If a mark or route is missing, that is the honest empty state. Try AAPL again, or set the optional Hermes key below.
@@ -52,7 +52,7 @@ If a mark or route is missing, that is the honest empty state. Try AAPL again, o
 
 Copy `.env.example` to `.env.local` and set `PYTH_API_KEY` for signed [Hermes](https://docs.pyth.network/price-feeds/core/api-instances-and-providers/hermes) ticks. Get a key at [app.pyth.com](https://app.pyth.com). Never commit it.
 
-Without a key, PegLens still uses:
+Without a key, xStockLens still uses:
 
 - Hermes `/v2/price_feeds` for feed ids + US cash session hours (public)
 - [Pyth Terminal](https://app.pyth.com) snapshots for the printed prices
@@ -60,15 +60,15 @@ Without a key, PegLens still uses:
 
 ### Hosted (no secrets)
 
-Live at **[https://peglens.vercel.app](https://peglens.vercel.app)**. Vercel builds `main` to production and every PR to a preview URL. No environment variables are set — the hosted demo runs without `PYTH_API_KEY`, same as local.
+Live at **[https://xstocklens.vercel.app](https://xstocklens.vercel.app)**. Vercel builds `main` to production and every PR to a preview URL. No environment variables are set — the hosted demo runs without `PYTH_API_KEY`, same as local.
 
 - Production chip reads **Hosted**. PR preview deploys read **Vercel preview**.
-- Smoke: `curl -s https://peglens.vercel.app/api/health` → `host.label` is `Hosted`, `pythKeyConfigured` is `false`.
+- Smoke: `curl -s https://xstocklens.vercel.app/api/health` → `host.label` is `Hosted`, `pythKeyConfigured` is `false`.
 - Optional later: add `PYTH_API_KEY` on the Vercel project for signed Hermes ticks. Not required.
 
-Deploying your own copy: [import the repo on Vercel](https://vercel.com/new/clone?repository-url=https://github.com/mpotter2002/peglens), leave Environment Variables empty, deploy.
+Deploying your own copy: [import the repo on Vercel](https://vercel.com/new/clone?repository-url=https://github.com/mpotter2002/xstocklens), leave Environment Variables empty, deploy.
 
-Hobby functions are capped at ~10s. PegLens times out upstreams (~2.5–3s) and renders honest empties instead of hanging.
+Hobby functions are capped at ~10s. xStockLens times out upstreams (~2.5–3s) and renders honest empties instead of hanging.
 
 ## Checks
 
