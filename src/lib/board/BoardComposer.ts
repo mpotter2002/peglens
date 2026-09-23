@@ -402,8 +402,8 @@ export class BoardComposer {
     const venueName = RouteBoard.venueTitle(venue);
     const headline = claimCheapest ? `Buy ${label} on ${venueName}` : `Trade ${label} on ${venueName}`;
     const caveat = claimCheapest
-      ? "Indicative quote for $100 USDC in, 50 bps slippage. PegLens never fills or signs."
-      : `Indicative ${venueName} quote for $100 USDC in, 50 bps slippage. Not a cheapest claim — PegLens only heard one venue. Never fills or signs.`;
+      ? "Indicative quote for $100 USDC in, 0.5% slippage. PegLens never fills or signs."
+      : `Indicative ${venueName} quote for $100 USDC in, 0.5% slippage. Not a cheapest claim — PegLens only heard one venue. Never fills or signs.`;
     return {
       wrapper: picked.card.kind,
       venue,

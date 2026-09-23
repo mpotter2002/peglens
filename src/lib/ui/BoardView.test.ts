@@ -22,7 +22,8 @@ describe("BoardView", () => {
     expect(BoardView.pegCopy(null, true)).toBe("Reference");
     expect(BoardView.pegCopy(peg({ sign: "unavailable", bps: null, dollars: null }))).toBe("No peg yet");
     expect(BoardView.pegCopy(peg({ sign: "flat", bps: 1.2, dollars: 0.04 }))).toMatch(/In line/);
-    expect(BoardView.pegCopy(peg({ sign: "premium", bps: 32, dollars: 1.08 }))).toMatch(/vs cash/);
+    expect(BoardView.pegCopy(peg({ sign: "premium", bps: 32, dollars: 1.08 }))).toBe("+0.32% vs cash · $1.08");
+    expect(BoardView.pegCopy(peg({ sign: "flat", bps: 1.2, dollars: 0.04 }))).toBe("In line · 0.012% vs cash");
     expect(BoardView.pegTone(peg({ sign: "discount", bps: -12, dollars: -0.4 }))).toBe("discount");
     expect(BoardView.pegTone(null)).toBe("muted");
   });

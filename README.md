@@ -41,7 +41,7 @@ curl -s http://localhost:3000/api/board/AAPL | head
 
 1. **Cash hero** with company label (Pyth feed name, else the demo catalog). Three mark cards: **Broker / cash · xStock · Ondo**, each with peg, Pyth feed id, and mint when known. Source is **Pyth Terminal snapshot** (or **Pyth Hermes** if `PYTH_API_KEY` is set).
 2. Session strip. Outside 09:30–16:00 ET cash wears a **Last cash print** badge — wrappers keep quoting. That is a last print, not a live bid/ask.
-3. Peg in bps vs cash. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero. **How to read this peg** is on the desk.
+3. Peg vs cash, as a percent of the cash price. `—` / **No print** / **No peg yet** means the venue did not return a tick, not a zero. **How to read this peg** is on the desk.
 4. **Venue comparison** on the page (plus the right-rail CTA). **Cheapest honest route** only when quotes compare. Primary CTA is the lowest USD/share. **Raydium, Jupiter, and Meteora** are listed (honest empties if a venue has no pool). Caption: **Quotes never execute**.
 5. Header **theme toggle** cycles System → Light → Dark (default **light**; saved preference wins). Host chip (**Hosted** on peglens.vercel.app, **Vercel preview** on preview deploys, **Local / test** on your machine) and **Not a broker** stay on. Wordmark returns **home**. PegLens never signs or fills.
 6. Type **ZZZZ** in ticker search (or tap a popular chip, or `/?t=ZZZZ`) — honest empty, no invented print, peg, or pool.
