@@ -1,18 +1,20 @@
 import { BrandWordmark } from "@/components/BrandWordmark";
+import { HEADER_TAGLINE } from "@/lib/ui/Brand";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function BoardSkeleton() {
   return (
     <div className="min-h-screen" aria-busy="true" aria-live="polite">
       <header className="desk-header sticky top-0 z-40">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div>
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Tokenized equity desk
             </p>
             <h1 className="mt-1 leading-none">
               <BrandWordmark />
             </h1>
+            <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{HEADER_TAGLINE}</p>
           </div>
           <Skeleton className="h-9 w-64" />
         </div>

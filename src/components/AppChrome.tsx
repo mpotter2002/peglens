@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BrandWordmark } from "@/components/BrandWordmark";
+import { HEADER_TAGLINE } from "@/lib/ui/Brand";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -35,8 +36,8 @@ export function AppChrome({
   return (
     <header className={cn("desk-header sticky top-0 z-40 w-full", scrolled && "is-scrolled")}>
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link href="/" className="min-w-0">
+        <div className="min-w-0">
+          <Link href="/" className="block min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Tokenized equity desk
             </p>
@@ -44,9 +45,7 @@ export function AppChrome({
               <BrandWordmark />
             </h1>
           </Link>
-          <p className="hidden max-w-sm text-sm text-muted-foreground md:block">
-            Broker mark vs chain wrappers. Premium, discount, honest venue CTA.
-          </p>
+          <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{HEADER_TAGLINE}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{host.label}</Badge>
