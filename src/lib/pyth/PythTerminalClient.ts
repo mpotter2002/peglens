@@ -29,9 +29,10 @@ export class PythTerminalClient {
   }
 
   static parse(symbol: string, html: string): TerminalQuote | null {
-    const latest = html.match(/"latestPrice":([0-9]+(?:\.[0-9]+)?)/);
+    // Terminal ships its data inside an RSC payload, so keys may be backslash-escaped (\"changePct24h\":).
+    const latest = html.match(/\\?"latestPrice\\?":([0-9]+(?:\.[0-9]+)?)/);
     const meta = html.match(/trading at ([0-9]+(?:\.[0-9]+)?)/i);
-    const change = html.match(/"changePct24h":(-?[0-9]+(?:\.[0-9]+)?)/);
+    const change = html.match(/\\?"changePct24h\\?":(-?[0-9]+(?:\.[0-9]+)?(?:e-?[0-9]+)?)/i);
     const priceRaw = latest?.[1] ?? meta?.[1];
     if (!priceRaw) {
       return null;

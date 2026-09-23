@@ -25,19 +25,6 @@ export class PegMath {
     return bps > 0 ? "premium" : "discount";
   }
 
-  static describe(bps: number | null): string {
-    const sign = this.sign(bps);
-    if (sign === "unavailable" || bps === null) {
-      return "No peg until both marks print";
-    }
-    const abs = Math.abs(bps);
-    const pretty = abs >= 10 ? abs.toFixed(0) : abs.toFixed(1);
-    if (sign === "flat") {
-      return `In line · ${pretty} bps`;
-    }
-    return sign === "premium" ? `+${pretty} bps premium` : `−${pretty} bps discount`;
-  }
-
   static impliedUsdPerShare(inUsd: number, outShares: number): number | null {
     if (!Number.isFinite(inUsd) || !Number.isFinite(outShares) || outShares <= 0) {
       return null;

@@ -96,9 +96,9 @@ export class BoardView {
       return "No peg yet";
     }
     if (peg.sign === "flat") {
-      return `In line · ${Format.bps(peg.bps)} vs cash`;
+      return `In line · ${Format.gapPct(peg.bps)} vs cash`;
     }
-    return `${Format.bps(peg.bps)} vs cash · ${Format.usd(peg.dollars, 2)}`;
+    return `${Format.gapPct(peg.bps)} vs cash · ${Format.signedUsd(peg.dollars)}`;
   }
 
   static pegTone(peg: PegVsEquity | null): PegTone {
@@ -208,7 +208,7 @@ export class BoardView {
     if (!featured) {
       return null;
     }
-    const vsCash = featured.vsEquityBps !== null ? ` · ${Format.bps(featured.vsEquityBps)} vs cash mark` : "";
+    const vsCash = featured.vsEquityBps !== null ? ` · ${Format.gapPct(featured.vsEquityBps)} vs cash mark` : "";
     return `${Format.usd(featured.effectiveUsdPerShare, 2)} / share${vsCash} · ${featured.caveat}`;
   }
 
@@ -301,7 +301,7 @@ export class BoardView {
   static pegGuide(ticker: string): string[] {
     return [
       `Cash is the US listed print (Pyth Equity.US.${ticker}/USD). Outside 09:30–16:00 ET it is a last cash print, not a live bid/ask.`,
-      "xStock and Ondo are on-chain wrappers. Peg is wrapper minus cash, in bps. Empty is empty — not zero.",
+      "xStock and Ondo are on-chain wrappers. Peg is wrapper minus cash, as a percent of the cash price. Empty is empty — not zero.",
       "Venue quotes are indicative $100 USDC in across Raydium, Jupiter, and Meteora. PegLens never fills or signs.",
     ];
   }

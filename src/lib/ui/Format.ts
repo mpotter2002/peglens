@@ -11,6 +11,19 @@ export class Format {
     }).format(value);
   }
 
+  /** A dollar gap with an explicit sign (+$4.35 / −$0.15). Anything that rounds to zero cents is unsigned. */
+  static signedUsd(value: number | null, options: { flat?: boolean } = {}): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+    const cents = Math.round(value * 100);
+    const body = this.usd(Math.abs(cents) / 100);
+    if (cents === 0 || options.flat) {
+      return body;
+    }
+    return `${cents > 0 ? "+" : "−"}${body}`;
+  }
+
   static compactUsd(value: number | null): string {
     if (value === null || !Number.isFinite(value)) {
       return "—";
@@ -18,16 +31,33 @@ export class Format {
     return this.usd(value, value >= 100 ? 2 : 4);
   }
 
-  static bps(value: number | null): string {
+  /** `value` is already in percent units (Pyth Terminal's changePct24h: -0.03 means -0.03%). */
+  /**
+   * A peg gap given in bps, shown as a percent (1 bps = 0.01%). Gaps under 0.1% get a third
+   * decimal so "in line" never rounds to a misleading 0.00%.
+   */
+  static gapPct(bps: number | null): string {
+    if (bps === null || !Number.isFinite(bps)) {
+      return "—";
+    }
+    const pct = bps / 100;
+    const abs = Math.abs(pct);
+    const pretty = abs < 0.1 ? abs.toFixed(3) : abs.toFixed(2);
+    if (Math.abs(bps) < 2) {
+      return `${pretty}%`;
+    }
+    return `${pct > 0 ? "+" : "−"}${pretty}%`;
+  }
+
+  static pct(value: number | null): string {
     if (value === null || !Number.isFinite(value)) {
       return "—";
     }
-    const abs = Math.abs(value);
-    const pretty = abs >= 10 ? abs.toFixed(0) : abs.toFixed(1);
-    if (Math.abs(value) < 2) {
-      return `${pretty} bps`;
+    const abs = Math.abs(value).toFixed(2);
+    if (abs === "0.00") {
+      return "0.00%";
     }
-    return `${value > 0 ? "+" : "−"}${pretty} bps`;
+    return `${value > 0 ? "+" : "−"}${abs}%`;
   }
 
   static relative(unixSeconds: number | null): string {

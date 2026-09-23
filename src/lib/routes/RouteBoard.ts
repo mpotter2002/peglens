@@ -82,7 +82,7 @@ export class RouteBoard {
     }
     if (params.raydium && params.cheapest.venue !== "raydium") {
       const extra = this.deltaBps(params.raydium, params.cheapest);
-      return `${winnerName} is cheaper than Raydium by ${extra} bps. Raydium still has a live pool — PegLens will not hide that.`;
+      return `${winnerName} is cheaper than Raydium by ${extra}. Raydium still has a live pool — PegLens will not hide that.`;
     }
     const hops = params.cheapest.hopLabels.join(" → ") || "direct";
     return `Raydium has no pool. ${winnerName} quoted via ${hops}. Indicative only — not a fill.`;
@@ -96,7 +96,7 @@ export class RouteBoard {
     if (!expensive.effectiveUsdPerShare || !cheap.effectiveUsdPerShare) {
       return "—";
     }
-    const bps = ((expensive.effectiveUsdPerShare - cheap.effectiveUsdPerShare) / cheap.effectiveUsdPerShare) * 10_000;
-    return Math.abs(bps).toFixed(1);
+    const pct = ((expensive.effectiveUsdPerShare - cheap.effectiveUsdPerShare) / cheap.effectiveUsdPerShare) * 100;
+    return `${Math.abs(pct).toFixed(2)}%`;
   }
 }
