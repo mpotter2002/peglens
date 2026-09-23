@@ -4,6 +4,7 @@ import { TtlCache } from "@/lib/cache/TtlCache";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
 import { cn } from "@/lib/utils";
 import { Format } from "@/lib/ui/Format";
+import { IntradayChart, type IntradaySeries } from "@/lib/market/IntradayChart";
 import {
   INDEX_TICKERS,
   MarketPulse,
@@ -14,6 +15,8 @@ import {
 import type { PegSign, SessionSnapshot } from "@/lib/types";
 
 const PULSE_TTL_MS = 30_000;
+/** Yahoo bars are 5 minutes wide, so a 60s cache never hides a new bar for long. */
+const CHART_TTL_MS = 60_000;
 /** Small screens show only the widest gaps so the ticker list stays near the fold. */
 const MOBILE_BARS = 6;
 
@@ -29,7 +32,17 @@ export async function MarketStripSection({ session }: { session: SessionSnapshot
   const indexRows = INDEX_TICKERS.map(({ ticker }) => all.rows.find((row) => row.ticker === ticker)).filter(
     (row): row is PulseRow => Boolean(row),
   );
-  return <MarketStrip session={session} pulse={{ ...all, rows: indexRows }} gaps={all} />;
+  const charts = Object.fromEntries(
+    await Promise.all(
+      INDEX_TICKERS.map(async ({ ticker }) => {
+        const series = await TtlCache.remember(`intraday:${ticker}`, CHART_TTL_MS, () => IntradayChart.load(ticker), {
+          skipCache: (value) => value === null,
+        });
+        return [ticker, series] as const;
+      }),
+    ),
+  );
+  return <MarketStrip session={session} pulse={{ ...all, rows: indexRows }} gaps={all} charts={charts} />;
 }
 
 export function MarketStripSkeleton() {
@@ -51,10 +64,12 @@ export function MarketStrip({
   session,
   pulse,
   gaps,
+  charts = {},
 }: {
   session: SessionSnapshot;
   pulse: MarketPulseSnapshot;
   gaps: MarketPulseSnapshot;
+  charts?: Record<string, IntradaySeries | null>;
 }) {
   return (
     <section aria-label="Market pulse" className="space-y-3">
@@ -62,7 +77,7 @@ export function MarketStrip({
       <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="grid gap-3 sm:grid-cols-2">
           {pulse.rows.map((row) => (
-            <IndexCard key={row.ticker} row={row} />
+            <IndexCard key={row.ticker} row={row} series={charts[row.ticker] ?? null} />
           ))}
         </div>
         <GapChart snapshot={gaps} />
@@ -94,7 +109,7 @@ function SessionBanner({ session }: { session: SessionSnapshot }) {
   );
 }
 
-function IndexCard({ row }: { row: PulseRow }) {
+function IndexCard({ row, series }: { row: PulseRow; series: IntradaySeries | null }) {
   return (
     <Link
       href={`/?t=${row.ticker}`}
@@ -107,10 +122,15 @@ function IndexCard({ row }: { row: PulseRow }) {
         </div>
         <PegChip bps={row.gapBps} sign={row.sign} />
       </div>
-      <dl className="mt-5 grid grid-cols-2 gap-3">
-        <LegCell label="Cash" leg={row.cash} />
-        <LegCell label={`${row.ticker}x`} leg={row.xstock} />
-      </dl>
+      <Sparkline series={series} label={`${row.name} (${row.ticker}) today`} />
+      <p className="mt-2 mb-3 flex items-baseline justify-between gap-2 font-mono text-xs tabular-nums text-muted-foreground">
+        <span>
+          {row.ticker} <span className="text-foreground">{legPrice(row.cash)}</span>
+        </span>
+        <span>
+          {row.ticker}x <span className="text-foreground">{legPrice(row.xstock)}</span>
+        </span>
+      </p>
       <p className="mt-auto flex items-center justify-between border-t border-border pt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground group-hover:text-foreground">
         <span>{gapLine(row)}</span>
         <span>Open desk →</span>
@@ -125,15 +145,71 @@ function gapLine(row: PulseRow): string {
   return row.sign === "premium" ? "xStock above cash" : "xStock below cash";
 }
 
-function LegCell({ label, leg }: { label: string; leg: PulseLeg | null }) {
+function legPrice(leg: PulseLeg | null): string {
+  return leg ? Format.usd(leg.priceUsd) : "—";
+}
+
+const SPARK_W = 240;
+const SPARK_H = 112;
+
+/** Real 5-minute closes for today's cash session, drawn against the prior close. No data means no line. */
+function Sparkline({ series, label }: { series: IntradaySeries | null; label: string }) {
+  if (!series) {
+    return (
+      <div className="mt-3 flex min-h-28 flex-1 items-center justify-center rounded-md border border-dashed border-border font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        No intraday data
+      </div>
+    );
+  }
+  const change = IntradayChart.changePct(series);
+  const up = (change ?? series.last - series.points[0].priceUsd) >= 0;
+  const geo = IntradayChart.geometry(series, SPARK_W, SPARK_H);
+  const gradient = `spark-${series.ticker}`;
   return (
-    <div className="min-w-0">
-      <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-2xl tracking-tight tabular-nums">{leg ? Format.usd(leg.priceUsd) : "—"}</dd>
-      <dd className={cn("mt-0.5 mb-4 font-mono text-xs tabular-nums", changeTone(leg?.changePct24h ?? null))}>
-        {leg ? `${Format.pct(leg.changePct24h)} 24h` : "No print"}
-      </dd>
-    </div>
+    <figure className="mt-3 flex flex-1 flex-col">
+      <figcaption className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Today · 5m</span>
+        <span className={cn("font-mono text-xs tabular-nums", changeTone(change))}>
+          {change === null ? "—" : `${Format.pct(change)}`}
+        </span>
+      </figcaption>
+      <svg
+        viewBox={`0 0 ${SPARK_W} ${SPARK_H}`}
+        preserveAspectRatio="none"
+        className={cn("min-h-28 w-full flex-1 overflow-visible", up ? "text-discount" : "text-premium")}
+        role="img"
+        aria-label={`${label}: ${series.points.length} five-minute closes, last ${Format.usd(series.last)}${change === null ? "" : `, ${Format.pct(change)} vs prior close`}`}
+      >
+        <defs>
+          <linearGradient id={gradient} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {geo.baselineY !== null ? (
+          <line
+            x1="0"
+            x2={SPARK_W}
+            y1={geo.baselineY}
+            y2={geo.baselineY}
+            className="stroke-muted-foreground/50"
+            strokeDasharray="3 3"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+          />
+        ) : null}
+        <path d={geo.area} fill={`url(#${gradient})`} />
+        <path
+          d={geo.line}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    </figure>
   );
 }
 
@@ -147,7 +223,7 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Chain vs cash</p>
           <h3 className="font-display text-xl leading-tight tracking-tight">xStock gap right now</h3>
         </div>
-        <p className="font-mono text-[10px] text-muted-foreground">±{Math.round(scaleBps)} bps</p>
+        <p className="font-mono text-[10px] text-muted-foreground">±{Format.gapPct(scaleBps).replace(/^[+−]/, "")}</p>
       </div>
       <ol className="mt-3 space-y-1.5">
         {bars.map((bar, i) => (
@@ -168,7 +244,7 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
                 ) : null}
               </span>
               <span className={cn("text-right font-mono tabular-nums", bar.gapBps === null ? "text-muted-foreground" : textTone(bar.sign))}>
-                {bar.gapBps === null ? "no print" : Format.bps(bar.gapBps)}
+                {bar.gapBps === null ? "no print" : Format.gapPct(bar.gapBps)}
               </span>
             </Link>
           </li>
@@ -186,7 +262,7 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
 function PegChip({ bps, sign }: { bps: number | null; sign: PegSign }) {
   return (
     <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] tabular-nums", chipTone(sign))}>
-      {bps === null ? "no peg" : Format.bps(bps)}
+      {bps === null ? "no peg" : Format.gapPct(bps)}
     </span>
   );
 }
