@@ -25,6 +25,8 @@ export type GapBar = {
   gapUsd: number | null;
   sign: PegSign;
   widthPct: number;
+  /** Gap is wider than the fixed scale; the bar is capped at full width. */
+  offScale: boolean;
 };
 
 export type MarketPulseSnapshot = {
@@ -40,8 +42,8 @@ export const INDEX_TICKERS = [
 ] as const;
 
 export class MarketPulse {
-  /** Bars are scaled to the widest gap, but never tighter than this, so a calm tape stays visibly calm. */
-  static readonly MIN_SCALE_BPS = 25;
+  /** Fixed ±1% scale: bar length always means the same thing, so a calm market looks calm. */
+  static readonly SCALE_BPS = 100;
 
   static symbols(ticker: string): { cash: string; xstock: string } {
     const symbol = ticker.trim().toUpperCase();
@@ -62,9 +64,7 @@ export class MarketPulse {
   }
 
   static gapChart(rows: PulseRow[]): { scaleBps: number; bars: GapBar[] } {
-    const priced = rows.filter((row) => row.gapBps !== null);
-    const widest = priced.reduce((max, row) => Math.max(max, Math.abs(row.gapBps as number)), 0);
-    const scaleBps = Math.max(widest, this.MIN_SCALE_BPS);
+    const scaleBps = this.SCALE_BPS;
     const bars = [...rows]
       .sort((a, b) => {
         if (a.gapBps === null) return b.gapBps === null ? 0 : 1;
@@ -76,7 +76,8 @@ export class MarketPulse {
         gapBps: row.gapBps,
         gapUsd: row.gapUsd,
         sign: row.sign,
-        widthPct: row.gapBps === null ? 0 : (Math.abs(row.gapBps) / scaleBps) * 100,
+        widthPct: row.gapBps === null ? 0 : Math.min((Math.abs(row.gapBps) / scaleBps) * 100, 100),
+        offScale: row.gapBps !== null && Math.abs(row.gapBps) > scaleBps,
       }));
     return { scaleBps, bars };
   }
