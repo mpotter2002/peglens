@@ -223,7 +223,7 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Chain vs cash</p>
           <h3 className="font-display text-xl leading-tight tracking-tight">xStock gap right now</h3>
         </div>
-        <p className="font-mono text-[10px] text-muted-foreground">±{Format.gapPct(scaleBps).replace(/^[+−]/, "")}</p>
+        <p className="font-mono text-[10px] text-muted-foreground">Bar scale ±{Format.gapPct(scaleBps).replace(/^[+−]/, "")}</p>
       </div>
       <ol className="mt-3 space-y-1.5">
         {bars.map((bar, i) => (
@@ -240,6 +240,15 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
                       barTone(bar.sign),
                     )}
                     style={{ width: `${Math.max(bar.widthPct / 2, 0.75)}%` }}
+                  />
+                ) : null}
+                {bar.offScale ? (
+                  <span
+                    className={cn(
+                      "absolute -inset-y-0.5 w-0.5 rounded-full bg-foreground",
+                      (bar.gapBps ?? 0) >= 0 ? "right-0" : "left-0",
+                    )}
+                    title="Gap is wider than the ±1% bar scale"
                   />
                 ) : null}
               </span>

@@ -31,7 +31,7 @@ describe("MarketPulse.row", () => {
 });
 
 describe("MarketPulse.gapChart", () => {
-  it("orders by absolute gap, puts missing prints last, and scales bars to the widest gap", () => {
+  it("orders by absolute gap, puts missing prints last, and sizes bars on a fixed ±1% scale", () => {
     const rows = [
       MarketPulse.row("AAPL", "Apple", q("a", 100), q("b", 100.2)),
       MarketPulse.row("TSLA", "Tesla", q("a", 100), q("b", 99.4)),
@@ -40,9 +40,10 @@ describe("MarketPulse.gapChart", () => {
     ];
     const chart = MarketPulse.gapChart(rows);
     expect(chart.bars.map((bar) => bar.ticker)).toEqual(["TSLA", "AAPL", "SPY", "CRCL"]);
-    expect(chart.scaleBps).toBeCloseTo(60, 5);
-    expect(chart.bars[0].widthPct).toBeCloseTo(100, 5);
-    expect(chart.bars[1].widthPct).toBeCloseTo(33.33, 1);
+    expect(chart.scaleBps).toBe(100);
+    expect(chart.bars[0].widthPct).toBeCloseTo(60, 5);
+    expect(chart.bars[1].widthPct).toBeCloseTo(20, 5);
+    expect(chart.bars[0].offScale).toBe(false);
     expect(chart.bars[3].widthPct).toBe(0);
     expect(chart.bars[3].gapBps).toBeNull();
   });
@@ -59,10 +60,23 @@ describe("MarketPulse.gapChart", () => {
     expect(byTicker.CRCL).toBeNull();
   });
 
-  it("uses a floor scale so a quiet market does not draw full-width bars", () => {
+  it("keeps the scale fixed, so one quiet ticker does not draw a full-width bar", () => {
     const chart = MarketPulse.gapChart([MarketPulse.row("SPY", "S&P 500", q("a", 100), q("b", 100.03))]);
-    expect(chart.scaleBps).toBe(MarketPulse.MIN_SCALE_BPS);
-    expect(chart.bars[0].widthPct).toBeCloseTo((3 / MarketPulse.MIN_SCALE_BPS) * 100, 5);
+    expect(chart.scaleBps).toBe(100);
+    expect(chart.bars[0].widthPct).toBeCloseTo(3, 5);
+  });
+
+  it("caps a gap wider than 1% at full width and flags it as off-scale instead of stretching the scale", () => {
+    const chart = MarketPulse.gapChart([
+      MarketPulse.row("MSTR", "Strategy", q("a", 100), q("b", 102.5)),
+      MarketPulse.row("SPY", "S&P 500", q("a", 100), q("b", 100.5)),
+    ]);
+    expect(chart.scaleBps).toBe(100);
+    expect(chart.bars[0].ticker).toBe("MSTR");
+    expect(chart.bars[0].widthPct).toBe(100);
+    expect(chart.bars[0].offScale).toBe(true);
+    expect(chart.bars[1].widthPct).toBeCloseTo(50, 5);
+    expect(chart.bars[1].offScale).toBe(false);
   });
 });
 
