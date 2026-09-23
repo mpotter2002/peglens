@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Search } from "lucide-react";
 import { AppChrome } from "@/components/AppChrome";
+import { MarketStripSection, MarketStripSkeleton } from "@/components/MarketStrip";
 import { Input } from "@/components/ui/input";
 import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
 import { DemoScript } from "@/lib/demo/DemoScript";
@@ -14,7 +16,11 @@ export function HomeBoard({ host, session }: { host: DemoHostInfo; session: Sess
     <div className="min-h-screen">
       <AppChrome host={host} sessionLabel={session.label} sessionClosed={session.afterHoursNarrative} />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <div className="max-w-3xl">
+        <Suspense fallback={<MarketStripSkeleton />}>
+          <MarketStripSection session={session} />
+        </Suspense>
+
+        <div className="mt-8 max-w-3xl">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Home</p>
           <h2 className="font-display mt-1 text-3xl leading-none tracking-tight sm:text-4xl">Most popular</h2>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">{BoardView.homeIntro()}</p>

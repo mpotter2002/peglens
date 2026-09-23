@@ -10,6 +10,14 @@ describe("PythTerminalClient", () => {
     expect(quote?.changePct24h).toBeCloseTo(0.226);
   });
 
+  it("reads the escaped RSC payload the live Terminal page actually ships", () => {
+    const html = `is trading at 773.61, -0.03% over the last 24 hours.
+      [\\"$\\",\\"$L3e\\",null,{\\"changePct24h\\":-0.027793103162187395,\\"exponent\\":-5,\\"latestPrice\\":773.61,\\"live\\":true}]`;
+    const quote = PythTerminalClient.parse("Equity.US.SPY/USD", html);
+    expect(quote?.priceUsd).toBe(773.61);
+    expect(quote?.changePct24h).toBeCloseTo(-0.0278, 4);
+  });
+
   it("returns null when the page has no price", () => {
     expect(PythTerminalClient.parse("Equity.US.AAPL/USD", "<html>nope</html>")).toBeNull();
   });

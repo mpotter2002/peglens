@@ -30,6 +30,18 @@ export class Format {
     return `${value > 0 ? "+" : "−"}${pretty} bps`;
   }
 
+  /** `value` is already in percent units (Pyth Terminal's changePct24h: -0.03 means -0.03%). */
+  static pct(value: number | null): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+    const abs = Math.abs(value).toFixed(2);
+    if (abs === "0.00") {
+      return "0.00%";
+    }
+    return `${value > 0 ? "+" : "−"}${abs}%`;
+  }
+
   static relative(unixSeconds: number | null): string {
     if (!unixSeconds) {
       return "snapshot";
