@@ -72,7 +72,7 @@ export class RouteBoard {
     const winnerName = this.venueTitle(params.cheapest.venue);
     if (live.length === 1) {
       const miss = raydiumMiss ? " Raydium has no pool." : "";
-      return `${winnerName} quoted this size.${miss} PegLens did not get a second venue to compare — not a cheapest claim.`;
+      return `${winnerName} quoted this size.${miss} xStockLens did not get a second venue to compare — not a cheapest claim.`;
     }
     if (params.raydium && params.cheapest.venue === "raydium") {
       if (jupiter && this.jupiterIsRaydium(jupiter)) {
@@ -82,7 +82,7 @@ export class RouteBoard {
     }
     if (params.raydium && params.cheapest.venue !== "raydium") {
       const extra = this.deltaBps(params.raydium, params.cheapest);
-      return `${winnerName} is cheaper than Raydium by ${extra}. Raydium still has a live pool — PegLens will not hide that.`;
+      return `${winnerName} is cheaper than Raydium by ${extra}. Raydium still has a live pool — xStockLens will not hide that.`;
     }
     const hops = params.cheapest.hopLabels.join(" → ") || "direct";
     return `Raydium has no pool. ${winnerName} quoted via ${hops}. Indicative only — not a fill.`;

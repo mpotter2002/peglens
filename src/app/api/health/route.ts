@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export function GET() {
   return Response.json({
     ok: true,
-    service: "peglens",
+    service: "xstocklens",
     demo: true,
     defaultTicker: TickerUniverse.DEFAULT,
     pythKeyConfigured: Boolean(HermesClient.apiKey()),

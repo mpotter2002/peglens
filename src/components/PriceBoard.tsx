@@ -86,7 +86,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
           <Alert className="fixed bottom-6 left-1/2 z-10 w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 bg-card shadow-lg">
             <AlertTitle className="font-mono text-[10px] uppercase tracking-[0.22em]">Board unreachable</AlertTitle>
             <AlertDescription>
-              {error}. PegLens will not invent marks while the API is down.
+              {error}. xStockLens will not invent marks while the API is down.
             </AlertDescription>
             <div className="mt-3">
               <Button
@@ -134,7 +134,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
         </div>
       </div>
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
-        <p>PegLens · Stocklana · Pyth marks · honest DEX quotes · no custody, no fills.</p>
+        <p>xStockLens · Stocklana · Pyth marks · honest DEX quotes · no custody, no fills.</p>
         <p className="flex gap-3">
           <a className="underline decoration-border underline-offset-4" href="https://prestocks.com/products" target="_blank" rel="noreferrer">
             PreStocks
@@ -333,7 +333,7 @@ function WrapperIdentity({ board }: { board: BoardPayload }) {
       <CardHeader>
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Wrapper identity</p>
         <CardTitle className="font-display text-lg font-normal">xStock and Ondo inventory</CardTitle>
-        <CardDescription>Names and mints from issuer/token inventory when PegLens can resolve them. Missing stays empty.</CardDescription>
+        <CardDescription>Names and mints from issuer/token inventory when xStockLens can resolve them. Missing stays empty.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {BoardView.routeCards(board).map((card) => {
@@ -410,7 +410,7 @@ function RouteTicket({ board }: { board: BoardPayload }) {
           <Empty className="border border-dashed py-5">
             <EmptyHeader>
               <EmptyTitle>No swap CTA</EmptyTitle>
-              <EmptyDescription>PegLens will not invent a pool or a fill.</EmptyDescription>
+              <EmptyDescription>xStockLens will not invent a pool or a fill.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         )}

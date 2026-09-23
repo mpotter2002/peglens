@@ -120,11 +120,11 @@ export class BoardView {
   }
 
   static emptyBody(ticker: string): string {
-    return `Pyth did not return a cash, xStock, or Ondo mark for ${ticker}. PegLens will not invent a price. Try AAPL, or set PYTH_API_KEY for signed Hermes ticks.`;
+    return `Pyth did not return a cash, xStock, or Ondo mark for ${ticker}. xStockLens will not invent a price. Try AAPL, or set PYTH_API_KEY for signed Hermes ticks.`;
   }
 
   static routeHeadline(board: BoardPayload): string {
-    return board.cheapestHonest?.headline ?? "No executable route right now — PegLens will not invent a pool";
+    return board.cheapestHonest?.headline ?? "No executable route right now — xStockLens will not invent a pool";
   }
 
   static routeKicker(board: BoardPayload): string {
@@ -140,12 +140,12 @@ export class BoardView {
   static routeStory(board: BoardPayload): string {
     const featured = board.cheapestHonest;
     if (!featured) {
-      return "PegLens will not invent a pool or a fill. Empty route cells stay empty.";
+      return "xStockLens will not invent a pool or a fill. Empty route cells stay empty.";
     }
     if (!featured.claimCheapest) {
-      return "This is a venue quote, not a cheapest claim. PegLens only heard one executable venue at this size.";
+      return "This is a venue quote, not a cheapest claim. xStockLens only heard one executable venue at this size.";
     }
-    return "Cheapest is first. Raydium, Jupiter, and Meteora stay listed so you can compare — PegLens will not hide a live pool or invent a missing one.";
+    return "Cheapest is first. Raydium, Jupiter, and Meteora stay listed so you can compare — xStockLens will not hide a live pool or invent a missing one.";
   }
 
   static ctaLabel(board: BoardPayload): string | null {
@@ -232,7 +232,7 @@ export class BoardView {
       return "US cash session is open (09:30–16:00 ET). Wrapper pegs are vs this cash print.";
     }
     if (board.equity.priceUsd === null) {
-      return "No cash print on this board — PegLens will not invent one.";
+      return "No cash print on this board — xStockLens will not invent one.";
     }
     return board.session.detail;
   }
@@ -302,12 +302,12 @@ export class BoardView {
     return [
       `Cash is the US listed print (Pyth Equity.US.${ticker}/USD). Outside 09:30–16:00 ET it is a last cash print, not a live bid/ask.`,
       "xStock and Ondo are on-chain wrappers. Peg is wrapper minus cash, as a percent of the cash price. Empty is empty — not zero.",
-      "Venue quotes are indicative $100 USDC in across Raydium, Jupiter, and Meteora. PegLens never fills or signs.",
+      "Venue quotes are indicative $100 USDC in across Raydium, Jupiter, and Meteora. xStockLens never fills or signs.",
     ];
   }
 
   static pageHonesty(): string {
-    return "Not a broker. Quotes never execute. Missing Pyth marks, mints, or pools stay empty — PegLens will not invent market cap, volume, news, or a fill.";
+    return "Not a broker. Quotes never execute. Missing Pyth marks, mints, or pools stay empty — xStockLens will not invent market cap, volume, news, or a fill.";
   }
 
   static homeIntro(): string {

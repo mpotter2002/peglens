@@ -1,5 +1,5 @@
 {
-  "name": "peglens",
+  "name": "xstocklens",
   "version": "0.1.0",
   "private": true,
   "description": "Live broker vs chain price board for tokenized stocks on Solana.",

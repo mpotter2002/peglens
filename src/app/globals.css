@@ -193,11 +193,11 @@
 }
 
 .font-display {
-  font-family: var(--font-peglens-display), "Source Serif 4", ui-serif, Georgia, serif;
+  font-family: var(--font-xstocklens-display), "Source Serif 4", ui-serif, Georgia, serif;
 }
 
 .font-mono {
-  font-family: var(--font-peglens-mono), "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-xstocklens-mono), "IBM Plex Mono", ui-monospace, monospace;
 }
 
 .price-xl {
