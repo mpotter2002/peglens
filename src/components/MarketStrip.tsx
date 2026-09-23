@@ -228,7 +228,7 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
       <ol className="mt-3 space-y-1.5">
         {bars.map((bar, i) => (
           <li key={bar.ticker} className={cn(i >= MOBILE_BARS && "hidden sm:block")}>
-            <Link href={`/?t=${bar.ticker}`} className="grid grid-cols-[3.25rem_1fr_4.5rem] items-center gap-2 text-xs">
+            <Link href={`/?t=${bar.ticker}`} className="grid grid-cols-[3.25rem_1fr_4.25rem_4rem] items-center gap-2 text-xs">
               <span className="font-mono">{bar.ticker}</span>
               <span className="relative h-2 rounded-full bg-muted" aria-hidden="true">
                 <span className="absolute inset-y-0 left-1/2 w-px bg-foreground/20" />
@@ -243,16 +243,25 @@ function GapChart({ snapshot }: { snapshot: MarketPulseSnapshot }) {
                   />
                 ) : null}
               </span>
-              <span className={cn("text-right font-mono tabular-nums", bar.gapBps === null ? "text-muted-foreground" : textTone(bar.sign))}>
-                {bar.gapBps === null ? "no print" : Format.gapPct(bar.gapBps)}
-              </span>
+              {bar.gapBps === null ? (
+                <span className="col-span-2 text-right font-mono text-muted-foreground">no print</span>
+              ) : (
+                <>
+                  <span className={cn("text-right font-mono tabular-nums", textTone(bar.sign))}>
+                    {Format.gapPct(bar.gapBps)}
+                  </span>
+                  <span className="text-right font-mono tabular-nums text-muted-foreground">
+                    {Format.signedUsd(bar.gapUsd, { flat: bar.sign === "flat" })}
+                  </span>
+                </>
+              )}
             </Link>
           </li>
         ))}
       </ol>
       <p className="mt-3 text-[11px] text-muted-foreground">
         {priced > 0
-          ? "Right of center: xStock trades above the cash print. Left: below. Pyth marks, not fills."
+          ? "Right of center: xStock trades above the cash print. Left: below. % of the cash price, then $ per share. Pyth marks, not fills."
           : "No live Pyth prints right now. PegLens will not draw an estimate."}
       </p>
     </div>

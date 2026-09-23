@@ -11,6 +11,19 @@ export class Format {
     }).format(value);
   }
 
+  /** A dollar gap with an explicit sign (+$4.35 / −$0.15). Anything that rounds to zero cents is unsigned. */
+  static signedUsd(value: number | null, options: { flat?: boolean } = {}): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+    const cents = Math.round(value * 100);
+    const body = this.usd(Math.abs(cents) / 100);
+    if (cents === 0 || options.flat) {
+      return body;
+    }
+    return `${cents > 0 ? "+" : "−"}${body}`;
+  }
+
   static compactUsd(value: number | null): string {
     if (value === null || !Number.isFinite(value)) {
       return "—";

@@ -98,7 +98,7 @@ export class BoardView {
     if (peg.sign === "flat") {
       return `In line · ${Format.gapPct(peg.bps)} vs cash`;
     }
-    return `${Format.gapPct(peg.bps)} vs cash · ${Format.usd(peg.dollars, 2)}`;
+    return `${Format.gapPct(peg.bps)} vs cash · ${Format.signedUsd(peg.dollars)}`;
   }
 
   static pegTone(peg: PegVsEquity | null): PegTone {

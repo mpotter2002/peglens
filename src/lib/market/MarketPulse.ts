@@ -14,12 +14,15 @@ export type PulseRow = {
   cash: PulseLeg | null;
   xstock: PulseLeg | null;
   gapBps: number | null;
+  /** xStock minus cash, in dollars per share. */
+  gapUsd: number | null;
   sign: PegSign;
 };
 
 export type GapBar = {
   ticker: string;
   gapBps: number | null;
+  gapUsd: number | null;
   sign: PegSign;
   widthPct: number;
 };
@@ -53,6 +56,7 @@ export class MarketPulse {
       cash: cash ? this.leg(cash) : null,
       xstock: xstock ? this.leg(xstock) : null,
       gapBps,
+      gapUsd: gapBps !== null && cash && xstock ? xstock.priceUsd - cash.priceUsd : null,
       sign: PegMath.sign(gapBps),
     };
   }
@@ -70,6 +74,7 @@ export class MarketPulse {
       .map((row) => ({
         ticker: row.ticker,
         gapBps: row.gapBps,
+        gapUsd: row.gapUsd,
         sign: row.sign,
         widthPct: row.gapBps === null ? 0 : (Math.abs(row.gapBps) / scaleBps) * 100,
       }));

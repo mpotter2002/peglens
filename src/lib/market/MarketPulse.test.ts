@@ -47,6 +47,18 @@ describe("MarketPulse.gapChart", () => {
     expect(chart.bars[3].gapBps).toBeNull();
   });
 
+  it("carries the per-share dollar gap (xStock minus cash) and leaves it null without both prints", () => {
+    const chart = MarketPulse.gapChart([
+      MarketPulse.row("SPY", "S&P 500", q("a", 773.61), q("b", 777.96)),
+      MarketPulse.row("TSLA", "Tesla", q("a", 380.2), q("b", 380.05)),
+      MarketPulse.row("CRCL", "Circle", q("a", 94.11), null),
+    ]);
+    const byTicker = Object.fromEntries(chart.bars.map((bar) => [bar.ticker, bar.gapUsd]));
+    expect(byTicker.SPY).toBeCloseTo(4.35, 6);
+    expect(byTicker.TSLA).toBeCloseTo(-0.15, 6);
+    expect(byTicker.CRCL).toBeNull();
+  });
+
   it("uses a floor scale so a quiet market does not draw full-width bars", () => {
     const chart = MarketPulse.gapChart([MarketPulse.row("SPY", "S&P 500", q("a", 100), q("b", 100.03))]);
     expect(chart.scaleBps).toBe(MarketPulse.MIN_SCALE_BPS);
