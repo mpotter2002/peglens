@@ -197,6 +197,13 @@ describe("BoardView", () => {
     expect(BoardView.pageHonesty()).toMatch(/will not invent/);
     expect(BoardView.homeIntro()).toMatch(/No invented prices/);
   });
+
+  it("labels the home list's mixed sourcing: Pyth price, Yahoo change and line", () => {
+    const note = BoardView.homeListSourceNote();
+    expect(note).toMatch(/Price: Pyth cash mark/);
+    expect(note).toMatch(/Yahoo/);
+    expect(note).toMatch(/prior close/);
+  });
 });
 
 function mark(partial: Partial<BoardMark> & Pick<BoardMark, "kind">): BoardMark {

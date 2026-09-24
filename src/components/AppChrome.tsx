@@ -35,17 +35,17 @@ export function AppChrome({
   const scrolled = useScrolled();
   return (
     <header className={cn("desk-header sticky top-0 z-40 w-full", scrolled && "is-scrolled")}>
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
         <div className="min-w-0">
           <Link href="/" className="block min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Tokenized equity desk
             </p>
-            <h1 className="mt-1 leading-none">
+            <h1 className="mt-0.5 leading-none">
               <BrandWordmark />
             </h1>
           </Link>
-          <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{HEADER_TAGLINE}</p>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">{HEADER_TAGLINE}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{host.label}</Badge>

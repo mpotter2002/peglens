@@ -78,7 +78,7 @@ describe("IntradayChart.path", () => {
 describe("IntradayChart.load", () => {
   it("fetches the Yahoo 1d/5m chart for the ticker and parses it", async () => {
     const urls: string[] = [];
-    const series = await IntradayChart.load("QQQ", async (url) => {
+    const series = await IntradayChart.load("QQQ", "1D", async (url) => {
       urls.push(url);
       return { ok: true, status: 200, text: yahoo([740, 745, 747], { symbol: "QQQ" }) };
     });
@@ -88,10 +88,39 @@ describe("IntradayChart.load", () => {
     expect(series?.points).toHaveLength(3);
   });
 
+  it("maps each chart range to the right Yahoo range/interval pair", async () => {
+    const urls: string[] = [];
+    const fetcher = async (url: string) => {
+      urls.push(url);
+      return { ok: true, status: 200, text: yahoo([740, 745]) };
+    };
+    await IntradayChart.load("SPY", "1W", fetcher);
+    await IntradayChart.load("SPY", "1M", fetcher);
+    await IntradayChart.load("SPY", "1Y", fetcher);
+    expect(urls[0]).toContain("range=5d&interval=15m");
+    expect(urls[1]).toContain("range=1mo&interval=1d");
+    expect(urls[2]).toContain("range=1y&interval=1wk");
+  });
+
+  it("normalizeRange accepts known ranges and defaults anything else to 1D", () => {
+    expect(IntradayChart.normalizeRange("1w")).toBe("1W");
+    expect(IntradayChart.normalizeRange("3M")).toBe("3M");
+    expect(IntradayChart.normalizeRange("garbage")).toBe("1D");
+    expect(IntradayChart.normalizeRange(null)).toBe("1D");
+  });
+
+  it("keeps real volumes on points and drops missing ones", () => {
+    const body = JSON.parse(yahoo([10, 11]));
+    body.chart.result[0].indicators.quote[0].volume = [1000, null];
+    const series = IntradayChart.parse("SPY", JSON.stringify(body));
+    expect(series?.points[0].volume).toBe(1000);
+    expect(series?.points[1].volume).toBeUndefined();
+  });
+
   it("returns null on HTTP failure or a thrown fetch so the card shows an honest empty state", async () => {
-    expect(await IntradayChart.load("SPY", async () => ({ ok: false, status: 429, text: "" }))).toBeNull();
+    expect(await IntradayChart.load("SPY", "1D", async () => ({ ok: false, status: 429, text: "" }))).toBeNull();
     expect(
-      await IntradayChart.load("SPY", async () => {
+      await IntradayChart.load("SPY", "1D", async () => {
         throw new Error("boom");
       }),
     ).toBeNull();

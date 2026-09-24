@@ -1,6 +1,6 @@
 import { HttpJson, type HttpJsonResult } from "@/lib/net/HttpJson";
 
-export type IntradayPoint = { time: number; priceUsd: number };
+export type IntradayPoint = { time: number; priceUsd: number; volume?: number };
 
 export type IntradaySeries = {
   ticker: string;
@@ -9,6 +9,18 @@ export type IntradaySeries = {
   previousClose: number | null;
   last: number;
   source: "yahoo-chart";
+};
+
+export const CHART_RANGES = ["1D", "1W", "1M", "3M", "1Y"] as const;
+export type ChartRange = (typeof CHART_RANGES)[number];
+
+/** Yahoo range/interval pairs: dense bars for short ranges, daily/weekly for long. */
+const RANGE_PARAMS: Record<ChartRange, { range: string; interval: string }> = {
+  "1D": { range: "1d", interval: "5m" },
+  "1W": { range: "5d", interval: "15m" },
+  "1M": { range: "1mo", interval: "1d" },
+  "3M": { range: "3mo", interval: "1d" },
+  "1Y": { range: "1y", interval: "1wk" },
 };
 
 export type ChartGeometry = {
@@ -25,7 +37,7 @@ type RawChart = {
     result?: Array<{
       meta?: { currency?: string; chartPreviousClose?: number; previousClose?: number };
       timestamp?: number[];
-      indicators?: { quote?: Array<{ close?: Array<number | null> }> };
+      indicators?: { quote?: Array<{ close?: Array<number | null>; volume?: Array<number | null> }> };
     }> | null;
   };
 };
@@ -38,13 +50,23 @@ type RawChart = {
 export class IntradayChart {
   static readonly MIN_POINTS = 2;
 
-  static url(ticker: string): string {
-    return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=1d&interval=5m`;
+  static normalizeRange(raw: string | null | undefined): ChartRange {
+    const value = (raw ?? "").trim().toUpperCase();
+    return (CHART_RANGES as readonly string[]).includes(value) ? (value as ChartRange) : "1D";
   }
 
-  static async load(ticker: string, fetcher: Fetcher = (url) => HttpJson.get(url, { timeoutMs: 3_000 })) {
+  static url(ticker: string, range: ChartRange = "1D"): string {
+    const params = RANGE_PARAMS[range];
+    return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${params.range}&interval=${params.interval}`;
+  }
+
+  static async load(
+    ticker: string,
+    range: ChartRange = "1D",
+    fetcher: Fetcher = (url) => HttpJson.get(url, { timeoutMs: 3_000 }),
+  ) {
     try {
-      const response = await fetcher(this.url(ticker));
+      const response = await fetcher(this.url(ticker, range));
       return response.ok ? this.parse(ticker, response.text) : null;
     } catch {
       return null;
@@ -58,12 +80,19 @@ export class IntradayChart {
       return null;
     }
     const times = result.timestamp ?? [];
-    const closes = result.indicators?.quote?.[0]?.close ?? [];
+    const quote = result.indicators?.quote?.[0];
+    const closes = quote?.close ?? [];
+    const volumes = quote?.volume ?? [];
     const points: IntradayPoint[] = [];
     times.forEach((time, i) => {
       const priceUsd = closes[i];
       if (typeof priceUsd === "number" && Number.isFinite(priceUsd) && priceUsd > 0) {
-        points.push({ time, priceUsd });
+        const volume = volumes[i];
+        points.push({
+          time,
+          priceUsd,
+          ...(typeof volume === "number" && Number.isFinite(volume) && volume >= 0 ? { volume } : {}),
+        });
       }
     });
     if (points.length < this.MIN_POINTS) {

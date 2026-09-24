@@ -313,4 +313,12 @@ export class BoardView {
   static homeIntro(): string {
     return "Most popular names on this desk. Open a ticker for live cash vs xStock vs Ondo marks. No invented prices.";
   }
+
+  /**
+   * The list mixes two real sources: Pyth has no public prior-close reference without a key,
+   * so the day change and line come from Yahoo. Say so rather than blend them silently.
+   */
+  static homeListSourceNote(): string {
+    return "Price: Pyth cash mark. Change and line: Yahoo 5-min closes vs the prior close. Different sources, so they can differ by a few cents.";
+  }
 }
