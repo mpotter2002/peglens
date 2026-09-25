@@ -1,17 +1,15 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { Search } from "lucide-react";
 import { AppChrome } from "@/components/AppChrome";
 import { MarketStripSection, MarketStripSkeleton } from "@/components/MarketStrip";
+import { TickerListSection, TickerListSkeleton } from "@/components/TickerList";
 import { Input } from "@/components/ui/input";
-import { TickerUniverse } from "@/lib/catalog/TickerUniverse";
 import { DemoScript } from "@/lib/demo/DemoScript";
 import { BoardView } from "@/lib/ui/BoardView";
 import { Format } from "@/lib/ui/Format";
 import type { DemoHostInfo, SessionSnapshot } from "@/lib/types";
 
 export function HomeBoard({ host, session }: { host: DemoHostInfo; session: SessionSnapshot }) {
-  const tickers = TickerUniverse.list();
   return (
     <div className="min-h-screen">
       <AppChrome host={host} sessionLabel={session.label} sessionClosed={session.afterHoursNarrative} />
@@ -26,7 +24,7 @@ export function HomeBoard({ host, session }: { host: DemoHostInfo; session: Sess
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">{BoardView.homeIntro()}</p>
         </div>
 
-        <form action="/" method="get" className="mt-5 max-w-xl rounded-lg bg-card px-2.5 py-2 ring-1 ring-foreground/10">
+        <form action="/" method="get" className="mt-5 w-full rounded-lg bg-card px-2.5 py-2 ring-1 ring-foreground/10">
           <label
             className="px-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
             htmlFor="home-ticker-input"
@@ -48,27 +46,9 @@ export function HomeBoard({ host, session }: { host: DemoHostInfo; session: Sess
           </div>
         </form>
 
-        <ol className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
-          {tickers.map((ticker) => {
-            const name = TickerUniverse.catalogName(ticker);
-            return (
-              <li key={ticker}>
-                <Link
-                  href={`/?t=${ticker}`}
-                  className="flex items-baseline justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-muted/60"
-                >
-                  <span className="flex min-w-0 items-baseline gap-3">
-                    <span className="font-mono text-lg tracking-tight">{ticker}</span>
-                    {name ? <span className="truncate text-sm text-muted-foreground">{name}</span> : null}
-                  </span>
-                  <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                    Open desk
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ol>
+        <Suspense fallback={<TickerListSkeleton />}>
+          <TickerListSection />
+        </Suspense>
 
         <ol className="mt-5 flex gap-2 overflow-x-auto text-[11px] text-muted-foreground">
           {DemoScript.steps().map((step) => (

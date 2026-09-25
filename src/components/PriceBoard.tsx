@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
 import { AppChrome } from "@/components/AppChrome";
 import { BoardSkeleton } from "@/components/BoardSkeleton";
+import { PriceChart } from "@/components/PriceChart";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -114,6 +115,7 @@ export function PriceBoard({ ticker }: { ticker: string }) {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,21rem)]">
           <main className={cn("min-w-0 space-y-5", pending && "opacity-60 transition-opacity")}>
             <QuoteHero board={board} />
+            <PriceChart ticker={active} />
             <SessionStrip board={board} />
             {BoardView.noLivePrints(board) ? (
               <Alert>
