@@ -70,6 +70,41 @@ Deploying your own copy: [import the repo on Vercel](https://vercel.com/new/clon
 
 Hobby functions are capped at ~10s. xStockLens times out upstreams (~2.5–3s) and renders honest empties instead of hanging.
 
+## Agent interface (MCP + JSON)
+
+An AI agent can call the same comparison the desk shows. It is read-only: it never signs, trades, custodies, or holds a wallet.
+
+| | |
+| --- | --- |
+| **MCP** (Streamable HTTP, stateless) | `POST https://xstocklens.vercel.app/api/mcp` |
+| Tools | `compare_ticker { ticker }` · `list_supported_tickers {}` |
+| JSON twin | `GET /api/agent/compare/AAPL` · `GET /api/agent/tickers` |
+
+`compare_ticker` returns, for one US ticker:
+- **Cash mark** with its session status. `regular_session`, or `last_cash_print` when US cash is closed (a last print, not a live quote).
+- **xStock and Ondo marks**, each with premium/discount vs cash in % and $. This is the board's own peg math; the agent layer adds no formula of its own.
+- **Wrapper identity**: Solana mint, decimals, and name source.
+- **Source and freshness** for every price. `pyth-hermes` ticks carry a publish time and a `stale` flag; `pyth-terminal-snapshot` prices say they are untimed.
+- **Redemption rate** and **indicative $100 USDC quotes** for Raydium, Jupiter and Meteora, with `comparable: true` only when two or more venues priced.
+
+Missing data is `null` with a `missing`/`reason` string, never a zero or an estimate. `status` is `ok` (a premium/discount exists), `partial` (some data, no comparison) or `no_data`. There is no day-change or rolling-24h field.
+
+Connect an MCP client (Claude Code shown):
+
+```bash
+claude mcp add --transport http xstocklens https://xstocklens.vercel.app/api/mcp
+```
+
+Or call it raw:
+
+```bash
+curl -s https://xstocklens.vercel.app/api/mcp -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"compare_ticker","arguments":{"ticker":"AAPL"}}}'
+curl -s https://xstocklens.vercel.app/api/agent/compare/AAPL
+```
+
+Code: `src/lib/agent/AgentCompare.ts` (reshapes `BoardComposer` output), `src/lib/agent/McpServer.ts` (JSON-RPC), routes under `src/app/api/mcp` and `src/app/api/agent`.
+
 ## Checks
 
 ```bash
@@ -84,6 +119,8 @@ npm run build
 | Surface | Source | Invented? |
 | --- | --- | --- |
 | Equity / xStock / Ondo marks | Pyth (Hermes or Terminal) | No |
+| Home list day % and sparklines | Yahoo 5-min closes vs prior close, beside the Pyth price (labeled on the page) | No — mixed sources, labeled |
+| Agent API / MCP | Same `BoardComposer` payload as the desk | No — reshaped, not recomputed |
 | US cash open/closed | Pyth `market_hours` + NY clock | No |
 | AAPLx swap | Raydium, Jupiter, Meteora (Meteora-only hops) | No — indicative quote |
 | AAPLon swap | Same three venues; Raydium often **ROUTE_NOT_FOUND** | No — missing pools stay empty |

@@ -46,6 +46,37 @@ curl -s http://localhost:3000/api/board/AAPL | head
 
 If you are outside 09:30–16:00 ET, cash wears a **Last cash print** badge (hero + cash source). Wrappers keep quoting. That is expected.
 
+## Agent demo (30 seconds)
+
+xStockLens is also a **remote MCP server**, so an AI agent can ask "is AAPLx trading above AAPL right now?" and get the same honest answer the desk shows. It's read-only.
+
+1. Ask the MCP endpoint what it offers:
+
+   ```bash
+   curl -s https://xstocklens.vercel.app/api/mcp -H 'content-type: application/json' \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+   ```
+
+   It returns two tools: `compare_ticker` and `list_supported_tickers`.
+
+2. Call `compare_ticker` for AAPL (the same data is at `GET /api/agent/compare/AAPL`):
+
+   ```bash
+   curl -s https://xstocklens.vercel.app/api/mcp -H 'content-type: application/json' \
+     -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"compare_ticker","arguments":{"ticker":"AAPL"}}}'
+   ```
+
+   Read `cash.status`, `wrappers[].vsCash`, `wrappers[].identity.mint`, and `venues.comparable` / `venues.cheapest`.
+
+3. Point a real agent at it, e.g. Claude Code:
+
+   ```bash
+   claude mcp add --transport http xstocklens https://xstocklens.vercel.app/api/mcp
+   claude -p "Using xstocklens, is AAPLx above or below the AAPL cash price, and which venue quoted cheapest?"
+   ```
+
+4. Try `ZZZZ`. You get `status: "no_data"` with every price `null` and a reason, not a guess.
+
 ## Honesty limits
 
 | Limit | What that means |
@@ -54,5 +85,7 @@ If you are outside 09:30–16:00 ET, cash wears a **Last cash print** badge (her
 | Quotes never execute | Raydium / Jupiter / Meteora numbers are indicative. CTAs open the venue. xStockLens never signs or fills. |
 | Overnight **Last cash print** | Outside regular US cash hours the cash column is a last print, not a live broker quote. Do not read it as a fillable bid/ask. |
 | Honest empties | Missing Pyth marks, missing Raydium pools, and unknown tickers stay empty. `ROUTE_NOT_FOUND` is shown, not faked. |
+| Mixed home-list sources | Home rows show the Pyth cash price, with the day % and sparkline from Yahoo. A note under the list says so. |
+| Agent API is read-only | `/api/mcp` and `/api/agent/*` return the desk's own data. No trading tools, no signing, not investment advice. |
 
 xStockLens does not invent prices or fills.
